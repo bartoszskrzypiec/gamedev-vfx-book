@@ -34,9 +34,10 @@ dev/scaffold.py       — generator brakujących szkieletów stron (nie nadpisuj
 
 ## Status projektu
 
-Żywy projekt, nie jednorazowa publikacja. Struktura i spis treści stoją w całości; napisane są
-na razie **Rozdział 1** (budżet klatki) i **Rozdział 5** (trim sheety) — reszta stron pokazuje
-panel „W przygotowaniu” i jest dopisywana sesja po sesji.
+Pierwsza pełna wersja jest gotowa: **28 rozdziałów i 14 dodatków, około 32 000 słów**, żadnej
+strony w stanie szkicu. Projekt pozostaje żywy — rozdziały będą pogłębiane, a diagramów przybędzie
+(obecnie inline'owany SVG jest tam, gdzie mechanizm bez rysunku jest trudny do opisania, a nie na
+każdej stronie).
 
 ## Publikacja
 

@@ -28,9 +28,61 @@
   <h1>Mipmapy, streaming i tekstury wirtualne</h1>
   <p class="subtitle">Gra nigdy nie ma w pamięci wszystkich tekstur i nikt tego nie zauważa. Render w VFX zwykle próbuje mieć wszystkie — i czasem właśnie na tym pada.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Mipmapy to gotowe, coraz mniejsze wersje tekstury. Istnieją nie dla oszczędności, tylko dlatego, że próbkowanie dużej tekstury na małej powierzchni migocze — a przy okazji pozwalają nie wczytywać poziomów, których nikt nie zobaczy.</li>
+      <li>Streaming i tekstury wirtualne idą krok dalej: w pamięci siedzą wyłącznie te fragmenty, które są w tej chwili widoczne, w rozdzielczości wynikającej z tego, jak duże są na ekranie.</li>
+      <li>Renderery offline mają swoją wersję tego mechanizmu — kafelkowany cache tekstur — i to jest właściwe miejsce styku: gra nie ma tu przewagi technicznej, ma przewagę w dyscyplinie przygotowania plików.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Scena z lasem ma czterysta gigabajtów tekstur. Renderuje się na maszynie ze stu dwudziestoma ośmioma. Nie jest to sprzeczność ani cud — to konsekwencja tego, że w żadnym momencie nie trzeba mieć wszystkiego naraz, i to jest jedna z niewielu rzeczy, które gra i renderfarma rozwiązują niemal identycznie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mipmapy</div>
+    <h2>Najpierw poprawność, dopiero potem oszczędność</h2>
+    <p>Mipmapa to piramida coraz mniejszych wersji tej samej tekstury, każda o połowę mniejsza od poprzedniej. Powód jej istnienia jest optyczny, nie pamięciowy: jeśli powierzchnia zajmuje na ekranie sto pikseli, a tekstura ma cztery miliony, to każdy piksel powinien uśrednić czterdzieści tysięcy tekseli. Pobranie zamiast tego jednego z nich daje migotanie, które w ruchu jest natychmiast widoczne — a przy filmowej ekspozycji i akumulacji temporalnej potrafi zamienić się w pełzający szum.</p>
+    <p>Efekt uboczny jest tym, co interesuje pamięć: skoro poziomy istnieją, można wczytać tylko te, które są potrzebne. Obiekt daleko od kamery nigdy nie dotknie poziomu zerowego. Koszt piramidy to około jedna trzecia rozmiaru oryginału — i jest to najlepiej wydana jedna trzecia w całym pipelinie tekstur.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Streaming i tekstury wirtualne</div>
+    <h2>Rezydentne jest tylko to, co widać</h2>
+    <p>Streaming trzyma w pamięci wybrane poziomy mip w zależności od tego, co jest widoczne, i podmienia je w miarę zbliżania się kamery. <span class="term-amber">Tekstury wirtualne</span> idą dalej: dzielą każdy poziom na małe kafle (typowo 128 px) i zarządzają nimi pojedynczo, więc rezydentna bywa lewa połowa muru w wysokiej rozdzielczości i prawa w niskiej — bo tylko lewa jest blisko.</p>
+    <div class="worked">
+      środowisko: 400 GB tekstur źródłowych<br>
+      widoczne w klatce, po uwzględnieniu poziomu mip i przycięcia:  ~32 GB<br>
+      rezydentne przy kaflowaniu 128 px:  <span style="color:#4fc3c0;">~8%</span> tego, co „jest w scenie”<br><br>
+      koszt: opóźnienie — kafel bywa gotowy o klatkę za późno
+    </div>
+    <p>Ten koszt jest właśnie tym, co odróżnia obie strony. W grze opóźnienie jednej klatki objawia się chwilowym rozmyciem, którego prawie nikt nie zauważa. W renderze offline nie ma czegoś takiego jak „za późno” — jest tylko czekanie, więc cache tekstur renderera po prostu blokuje się na czas doczytania. Mechanizm jest ten sam, konsekwencja inna: w grze psuje obraz, w VFX psuje czas.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co przenieść</div>
+    <h2>Dyscyplina plików, nie technologia</h2>
+    <p>Renderery offline mają kafelkowany, mipmapowany format tekstur i cache od bardzo dawna. Patent do przeniesienia nie brzmi więc „wprowadźcie streaming” — brzmi <span class="term-violet">„upewnijcie się, że wasze pliki w ogóle pozwalają go użyć”</span>. W praktyce sprowadza się to do trzech rzeczy, które w gamedevie robi importer, a w VFX często nie robi nikt:</p>
+    <ul class="compact">
+      <li><strong>Konwersja do formatu kafelkowanego z mipmapami przy publikacji</strong>, a nie w locie przy pierwszym renderze. Renderer, który dostaje zwykły PNG, musi go najpierw przekonwertować — dla każdego zadania na farmie osobno.</li>
+      <li><strong>Rozdzielczość dopasowana do texel density, nie do maksimum</strong>. Mapa 8K na obiekcie, który nigdy nie zajmuje więcej niż 3% kadru, nie zostanie w całości użyta ani razu, ale zajmie miejsce w cache'u i czas przy konwersji.</li>
+      <li><strong>Świadomość, że cache jest wspólny.</strong> Jeden asset z mapami większymi niż potrzeba wypycha z cache'u tekstury wszystkich pozostałych — i to jest mechanizm, przez który jeden nieostrożny publish spowalnia cały shot, nie tylko własny obiekt.</li>
+    </ul>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Mipmapa</dt>
+      <dd>Piramida coraz mniejszych wersji tekstury; istnieje przede wszystkim po to, by uniknąć migotania przy minifikacji.</dd>
+      <dt>Streaming tekstur</dt>
+      <dd>Wczytywanie wyłącznie tych poziomów mip, które są w danej chwili potrzebne.</dd>
+      <dt>Tekstura wirtualna</dt>
+      <dd>Tekstura zarządzana kaflami, w której rezydentne są pojedyncze fragmenty, a nie całe poziomy.</dd>
+      <dt>Cache tekstur</dt>
+      <dd>Wspólna pula pamięci renderera na doczytywane kafle; przepełniona przez jeden asset spowalnia wszystkie.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Skoro w pamięci siedzą kafle, warto wiedzieć, ile każdy z nich waży — a to zależy od formatu i kompresji. Następny rozdział pokazuje, dlaczego ta sama tekstura potrafi zajmować 4 MB albo 64 MB i która z tych liczb jest wynikiem decyzji, a która przypadku.</p>
   </div>
 
 <div class="site-nav chapter-nav">

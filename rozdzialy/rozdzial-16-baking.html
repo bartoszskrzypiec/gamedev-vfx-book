@@ -28,9 +28,56 @@
   <h1>Baking: normal, AO, curvature, position</h1>
   <p class="subtitle">Piekarnia gamedevu przeniesiona do lookdevu — mapy, które zamieniają policzalny, ale drogi detal na tani odczyt z tekstury.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Baking zamienia kosztowną informację o kształcie na tani odczyt z tekstury: normalne, zasłonięcie, krzywiznę, pozycję, grubość.</li>
+      <li>W grze to konieczność. W VFX najcenniejsze są nie normalne, tylko mapy pomocnicze — krzywizna i AO sterujące maskami materiału, dzięki którym zabrudzenie samo trafia w zagłębienia.</li>
+      <li>Cage i zasięg promienia to dwa parametry odpowiadające za większość artefaktów; reszta bierze się z UV, które nie były przygotowane pod wypalanie.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Baking ma w VFX złą prasę, bo kojarzy się z jedną konkretną rzeczą: udawaniem geometrii mapą normalnych, czyli tym, co path tracer i tak potrafi policzyć naprawdę. To zawężenie jest kosztowne, bo wypalanie map <em>pomocniczych</em> — tych, których nikt nie ogląda bezpośrednio — jest jedną z najlepiej przenoszalnych technik w tej książce.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Promień z siatki niskiej do wysokiej</h2>
+    <p>Wypalanie polega na wystrzeleniu z każdego piksela tekstury promienia w kierunku siatki wysokiej rozdzielczości i zapisaniu tego, co promień tam zastanie. Kierunek wyznacza <span class="term-amber">cage</span> — rozdmuchana wersja siatki niskiej, która mówi, skąd i pod jakim kątem szukać. Zasięg promienia ogranicza, jak daleko wolno szukać.</p>
+    <p>Z tych dwóch parametrów bierze się większość problemów. Cage zbyt ciasny powoduje, że wystające fragmenty wysokiej siatki nie zostaną znalezione i w mapie pojawią się dziury. Zbyt luźny — że promień z jednego miejsca trafi w zupełnie inną część modelu i zapisze jej detal w niewłaściwym miejscu; klasyczny objaw to ucho odbite na policzku. Dodatek J zawiera katalog tych artefaktów razem z parametrem odpowiedzialnym za każdy z nich.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mapy, które warto wypalać w VFX</div>
+    <h2>Nie normalne, tylko sterowanie</h2>
+    <ul class="compact">
+      <li><strong>Krzywizna (curvature).</strong> Mówi, gdzie powierzchnia jest wypukła, a gdzie wklęsła. To najbardziej użyteczna mapa pomocnicza, jaka istnieje: wypukłości dostają wytarcie i odsłonięty metal, wklęsłości — kurz i zaciek. Jedna mapa zamienia ręczne malowanie zużycia w parametr.</li>
+      <li><strong>Zasłonięcie (AO).</strong> W renderze nie służy do zaciemniania obrazu — path tracer policzy zasłonięcie sam i lepiej. Służy jako <em>maska</em>: gdzie wilgoć, gdzie mech, gdzie brud, który nie ma jak zostać zmyty.</li>
+      <li><strong>Pozycja i grubość.</strong> Pozycja pozwala różnicować materiał wzdłuż obiektu (zacieki płyną w dół, rdza zaczyna się przy ziemi). Grubość — sterować rozpraszaniem podpowierzchniowym tam, gdzie obiekt jest cienki.</li>
+      <li><strong>Normalne.</strong> W VFX z rezerwą: sensowne dla assetów tłowych i dla detalu, którego nie widać na sylwetce; zastępowane displacementem wszędzie tam, gdzie kontur ma znaczenie (Rozdział 13).</li>
+    </ul>
+    <p>Zwróć uwagę na wspólną cechę pierwszych trzech pozycji: żadna z nich nie jest obrazem. To są dane o kształcie, których materiał używa jako wejścia — i dlatego są przenośne bez zastrzeżeń. Filtr z Rozdziału 2 przepuszcza je natychmiast: oszczędzają pracę, płaci się raz, a kamera może podejść dowolnie blisko, bo nic tu nie udaje geometrii.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Warunki</div>
+    <h2>Czego wypalanie wymaga od assetu</h2>
+    <p>Wypalanie jest jedynym etapem, który stawia UV twarde wymagania — i to dlatego rozdział o higienie assetu (Rozdział 9) stoi przed tym rozdziałem, a nie po nim. Wysepki nie mogą na siebie nachodzić, bo dwa miejsca powierzchni zapisałyby się w ten sam piksel. Margines musi być wystarczający, żeby przy niższych mipmapach nic się nie rozlało. Jeśli asset korzysta z lustrzanych odbić UV albo dzieli teksturę z innymi obiektami (trim sheet, atlas), potrzebny jest <strong>drugi, nienachodzący kanał UV wyłącznie do wypalania</strong> — bo pierwszy z definicji nie spełnia tych warunków.</p>
+    <p>To jest zresztą dobra ilustracja tego, jak techniki z tej książki się zazębiają: trim sheet z Rozdziału 5 wymusza wspólne UV, wspólne UV uniemożliwia wypalanie danych na obiekt, a rozwiązaniem jest drugi kanał, o którym trzeba pomyśleć przy rozkładaniu UV — czyli tydzień wcześniej.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Baking</dt>
+      <dd>Zapisanie policzonej informacji o kształcie do tekstury, żeby odczytać ją tanio w czasie renderu.</dd>
+      <dt>Cage</dt>
+      <dd>Rozdmuchana wersja siatki niskiej wyznaczająca kierunek i punkt startu promieni wypalających.</dd>
+      <dt>Krzywizna</dt>
+      <dd>Mapa wypukłości i wklęsłości powierzchni; podstawowe wejście masek zużycia i zabrudzenia.</dd>
+      <dt>Drugi kanał UV</dt>
+      <dd>Osobny, nienachodzący układ UV używany wyłącznie do wypalania danych przypisanych do obiektu.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Część o teksturach domknięta. Następna zajmuje się tym, co dzieje się z assetem po jego zbudowaniu — a zaczyna od zmiany, którą real-time wnosi do VFX najmocniej i która nie ma nic wspólnego z finalną klatką: od tempa podejmowania decyzji.</p>
   </div>
 
 <div class="site-nav chapter-nav">

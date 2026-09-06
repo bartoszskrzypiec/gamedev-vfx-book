@@ -28,9 +28,69 @@
   <h1>Kompresja: BC, ASTC, EXR i .tx</h1>
   <p class="subtitle">Ta sama tekstura potrafi zajmować 4 MB albo 64 MB w zależności od jednego ustawienia — i tylko jedna z tych liczb jest przypadkowa.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Kompresja blokowa (BC, ASTC) jest stratna, stała w rozmiarze i dekodowana sprzętowo — dlatego gra jej używa. Formaty offline (EXR, kafelkowany .tx) stawiają na precyzję i dostęp fragmentaryczny.</li>
+      <li>Najważniejsza reguła przenoszenia brzmi: format docelowy nigdy nie jest źródłem prawdy. Tekstura skompresowana pod grę nie wraca do renderu bez straty, której nie da się cofnąć.</li>
+      <li>Mapa normalnych i mapy danych mają własne reguły — kompresja projektowana pod kolor psuje je w sposób, który widać dopiero na gładkiej powierzchni.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Ta sama mapa koloru 2048×2048 potrafi zajmować 64 MB, 32 MB, 5,6 MB albo 2,8 MB. Wszystkie te liczby są poprawne w swoim kontekście, a wybór między nimi jest jedną z niewielu decyzji w pipelinie, które da się podjąć raz i zautomatyzować na zawsze — pod warunkiem, że rozumie się, czym się różnią.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dwie filozofie</div>
+    <h2>Stały rozmiar kontra wierność</h2>
+    <p><span class="term-amber">Kompresja blokowa</span> dzieli obraz na kwadraty 4×4 piksele i zapisuje każdy z nich stałą liczbą bitów — niezależnie od zawartości. To brzmi jak wada, a jest całym sensem: skoro rozmiar bloku jest stały, GPU potrafi wyliczyć adres dowolnego piksela bez dekodowania czegokolwiek wcześniej i rozpakować go sprzętowo w momencie odczytu. Tekstura zostaje skompresowana <em>w pamięci</em>, nie tylko na dysku. Cena to strata jakości, nieodwracalna i tym większa, im więcej w bloku dzieje się naraz.</p>
+    <p><span class="term-cyan">Formaty offline</span> mają odwrotne priorytety. EXR trzyma wartości zmiennoprzecinkowe, więc unosi zakres dynamiczny daleko poza biel, i oferuje kompresję od bezstratnej po stratną-ale-delikatną. Kafelkowany format renderera (.tx i pokrewne) dokłada to, co dla renderu najważniejsze: gotowe mipmapy i podział na kafle, żeby dało się wczytać fragment bez czytania całości (Rozdział 14). Rozmiar wynikowy nie jest stały i nikomu to nie przeszkadza, bo nic nie musi liczyć adresu w locie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rachunek</div>
+    <h2>Skąd biorą się te liczby</h2>
+    <div class="worked">
+      mapa 2048 × 2048, RGBA<br><br>
+      8-bit bez kompresji        4,19 M px × 4 B   =  16,8 MB<br>
+      half-float (offline)       4,19 M px × 8 B   =  33,5 MB<br>
+      BC7 (kolor, wysoka jakość) 8 bitów na piksel =  <span style="color:#e8a33d;">4,2 MB</span><br>
+      BC1 (kolor, bez alfy)      4 bity na piksel  =  2,1 MB<br>
+      BC5 (2 kanały, normalne)   8 bitów na piksel =  4,2 MB<br><br>
+      plus mipmapy: <span style="color:#8b909b;">+33% do każdej z powyższych</span>
+    </div>
+    <p>Warto zwrócić uwagę na proporcję, a nie na konkretne wartości: przejście z formatu offline na blokowy to ośmiokrotność, a nie kilkanaście procent. To dlatego gra w ogóle mieści się w pamięci karty — i dlatego pytanie „czemu nie użyjemy tego w renderze” pojawia się regularnie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dlaczego nie w renderze</div>
+    <h2>Trzy powody i jeden wyjątek</h2>
+    <ul class="compact">
+      <li><strong>Zakres.</strong> Formaty blokowe są ośmiobitowe w praktyce; wartości powyżej bieli nie mają gdzie się zmieścić. Dla mapy koloru bazowego to bez znaczenia, dla wszystkiego, co niesie światło — dyskwalifikacja.</li>
+      <li><strong>Kumulacja strat.</strong> Render mnoży, dzieli i całkuje wartości z tekstur przez wiele odbić. Błąd kwantyzacji, niewidoczny na płaskim podglądzie, potrafi ujawnić się jako pasmowanie w gradiencie albo dziwny kolor w świetle pośrednim.</li>
+      <li><strong>Brak zysku tam, gdzie boli.</strong> Wąskim gardłem renderu jest zwykle cache i przepustowość dysku, a te obsługuje się kaflami i mipmapami. Blokowa kompresja rozwiązuje problem pamięci GPU, którego render na CPU po prostu nie ma.</li>
+    </ul>
+    <p>Wyjątek jest jeden i wart odnotowania: podgląd. Wersja assetu przeznaczona do viewportu, do silnika albo do previzu (Rozdział 22) korzysta z kompresji blokowej dokładnie tak jak gra — i powinna, bo tam liczy się płynność, a nie ostatni procent wierności. To osobny produkt tego samego źródła, nie zamiennik.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Reguła</div>
+    <h2>Źródło prawdy jest jedno i jest bezstratne</h2>
+    <p>Cała ta różnorodność formatów jest łatwa do opanowania jednym ustaleniem: <span class="term-violet">źródłem prawdy jest plik bezstratny w pełnej precyzji, a wszystkie formaty docelowe są z niego generowane automatycznie przy publikacji</span>. Nigdy odwrotnie. Tekstura, która wróciła z silnika po kompresji BC i została uznana za źródło, jest nieodwracalnie gorsza, a nikt tego nie zauważy do momentu, w którym trafi na wielką gładką powierzchnię w zbliżeniu.</p>
+    <p>Dwa dopiski, o których łatwo zapomnieć. Mapy normalnych używają formatu przechowującego dwa kanały (trzeci odtwarza się z nich obliczeniowo), bo kompresja projektowana pod kolor rozjeżdża wektory i daje widoczne pasy na gładkich powierzchniach. A mapy danych — roughness, metalness, maski — nie tylko muszą być liniowe (Rozdział 3), ale też źle znoszą pakowanie kilku niezależnych kanałów w jeden blok, bo blok szuka wspólnego mianownika dla rzeczy, które nie mają ze sobą nic wspólnego. Dodatek H rozkłada poszczególne formaty i to, gdzie w każdym z nich pojawia się pierwszy artefakt.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Kompresja blokowa</dt>
+      <dd>Rodzina formatów (BC, ASTC) kodujących bloki 4×4 piksele stałą liczbą bitów, dekodowanych sprzętowo przez GPU.</dd>
+      <dt>EXR</dt>
+      <dd>Zmiennoprzecinkowy format obrazu o wysokim zakresie dynamicznym, standard wymiany w VFX.</dd>
+      <dt>Format kafelkowany (.tx)</dt>
+      <dd>Tekstura z gotowymi mipmapami i podziałem na kafle, przygotowana pod fragmentaryczny odczyt przez renderer.</dd>
+      <dt>Źródło prawdy</dt>
+      <dd>Bezstratny plik w pełnej precyzji, z którego generowane są wszystkie formaty docelowe — nigdy plik wynikowy.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Kompresja decyduje, ile miejsca zajmuje gotowa mapa. Następny rozdział cofa się o krok wcześniej — do momentu, w którym te mapy w ogóle powstają z geometrii, czyli do bakingu.</p>
   </div>
 
 <div class="site-nav chapter-nav">

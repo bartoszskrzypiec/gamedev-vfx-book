@@ -28,9 +28,60 @@
   <h1>Instancing i scattering: jedna geometria, milion kopii</h1>
   <p class="subtitle">Las, tłum, gruz. W obu branżach ta sama zasada: nie kopiuj danych, kopiuj wskaźnik i macierz.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Instancing to trzymanie geometrii raz i odwoływanie się do niej przez wskaźnik plus macierz transformacji. Milion kopii kosztuje wtedy tyle pamięci, co jedna, plus milion macierzy.</li>
+      <li>Obie branże doszły do tego niezależnie i mają to od dawna — patentem do przeniesienia nie jest sam mechanizm, tylko dyscyplina projektowania assetów pod niego.</li>
+      <li>Wariancja bez duplikacji: obrót, skala, kolor na instancję i przesunięcie w atlasie potrafią zrobić różnorodność, do której naiwnie użyto by dziesięciu osobnych modeli.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Las, tłum, gruz po eksplozji, nity na kadłubie. Wszędzie tam liczba obiektów przekracza to, co dałoby się przechować pojedynczo, a liczba <em>różnych</em> obiektów jest zaskakująco mała. Instancing jest odpowiedzią na tę asymetrię i jest jedną z niewielu technik w tej książce, którą VFX ma równie dobrze rozwiniętą jak gamedev — packed primitives w Houdinim, point instancer w USD, procedurals renderera.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Wskaźnik i macierz</h2>
+    <p>Zamiast kopiować siatkę, przechowuje się ją raz, a każde wystąpienie opisuje trójką: który obiekt, gdzie stoi, jak jest obrócony i przeskalowany. Macierz 4×4 to 64 bajty; siatka drzewa to kilkanaście megabajtów.</p>
+    <div class="worked">
+      drzewo: 24 000 tris ≈ 3,5 MB geometrii<br><br>
+      1 240 000 drzew skopiowanych:  1 240 000 × 3,5 MB  =  <span style="color:#e8a33d;">~4,3 TB</span><br>
+      1 240 000 drzew instancjonowanych:  3,5 MB + (1 240 000 × 64 B)  =  <span style="color:#4fc3c0;">~83 MB</span><br><br>
+      różnica nie jest optymalizacją — jest różnicą między „da się” a „nie da się”
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co przenieść</div>
+    <h2>Dyscyplina, nie mechanizm</h2>
+    <p>Skoro obie strony mają instancing, co właściwie jest tu do przeniesienia? Nawyk projektowania assetu <em>pod</em> niego, zamiast włączania go po fakcie. Konkretnie trzy rzeczy.</p>
+    <ul class="compact">
+      <li><strong>Pivot na styku z podłożem.</strong> Instancja rozrzucana po terenie obraca się i skaluje wokół pivota — jeśli ten jest w środku bryły, połowa lasu wisi w powietrzu albo tonie w ziemi (Rozdział 9 nie bez powodu wymienia to jako pierwsze).</li>
+      <li><strong>Jeden materiał na instancjonowany zestaw.</strong> Instancje dzielące geometrię, ale mające po pięć różnych materiałów, tracą znaczną część zysku — i to jest dokładnie ten moment, w którym trim sheet z Rozdziału 5 przestaje być estetyczną decyzją, a staje się warunkiem technicznym.</li>
+      <li><strong>Wariancja parametrem, nie modelem.</strong> Zanim ktoś zrobi drugi model drzewa, warto sprawdzić, ile da się wycisnąć z losowego obrotu wokół osi pionowej, skali w zakresie ±15%, odcienia na instancję i przesunięcia w atlasie tekstur. W praktyce trzy modele plus wariancja parametryczna czytają się bogaciej niż dwanaście modeli bez niej.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rozrzucanie</div>
+    <h2>Reguła zamiast ręcznego stawiania</h2>
+    <p>Druga połowa tematu to sposób, w jaki instancje trafiają na swoje miejsca. Ręczne stawianie kończy się przy kilkuset obiektach i daje wynik, którego nie da się powtórzyć po zmianie terenu. Rozrzucanie regułą — gęstość sterowana maską, unikanie kolizji, zależność od nachylenia i wysokości, ścieżki wolne od roślin — daje wynik, który po zmianie terenu przelicza się sam.</p>
+    <p>To jest miejsce, w którym VFX historycznie prowadził: Houdini rozwiązywał ten problem, zanim silniki gier miały narzędzia porównywalnej klasy, a scattering pod <em>Avatara</em> był stanem sztuki wtedy, gdy gry stawiały drzewa ręcznie. Warto o tym pamiętać, bo książka o przenoszeniu patentów łatwo staje się listą zasług jednej strony. Rozdział 24 wraca do tego szerzej.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Instancja</dt>
+      <dd>Wystąpienie geometrii opisane referencją do niej i macierzą transformacji, bez kopiowania danych.</dd>
+      <dt>Point instancer</dt>
+      <dd>Mechanizm USD opisujący wiele instancji jednego lub kilku prototypów zestawem punktów i atrybutów.</dd>
+      <dt>Wariancja parametryczna</dt>
+      <dd>Różnicowanie instancji przez parametry (obrót, skala, kolor, przesunięcie UV) zamiast przez osobne modele.</dd>
+      <dt>Scattering</dt>
+      <dd>Rozmieszczanie instancji regułą — maską gęstości, nachyleniem, unikaniem kolizji — zamiast ręcznie.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Instancing i LOD-y radzą sobie z <em>liczbą</em> obiektów. Zostaje pytanie o pojedynczy obiekt, który sam w sobie ma więcej detalu, niż mieści się w siatce. Następny rozdział zestawia dwie odpowiedzi na to pytanie: wirtualizowaną geometrię z silnika i subdivision z displacementem z renderu offline.</p>
   </div>
 
 <div class="site-nav chapter-nav">

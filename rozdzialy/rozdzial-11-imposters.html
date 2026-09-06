@@ -28,9 +28,62 @@
   <h1>Imposters i billboardy: obraz zamiast geometrii</h1>
   <p class="subtitle">Kiedy przestaje opłacać się mieć obiekt, a zaczyna opłacać jego zdjęcie — pytanie stare jak matte painting, tylko z automatem do generowania.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Imposter to zapisany obraz obiektu widzianego z wielu kierunków, odtwarzany na dwóch trójkątach zwróconych do kamery. Ostatni poziom kaskady LOD, tańszy od niej o dwa rzędy wielkości.</li>
+      <li>VFX zna tę ideę jako karty i matte painting, tylko robi ją ręcznie i dla konkretnego ujęcia. Gamedev wnosi automat: atlas widoków generowany z assetu jednym poleceniem.</li>
+      <li>Warunkiem użycia jest ruch kamery, nie odległość — imposter rozpada się nie wtedy, gdy podejdziesz blisko, tylko wtedy, gdy paralaksa ujawni, że to płaskie.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Kaskada z poprzedniego rozdziału musi się gdzieś skończyć. Drzewo zajmujące na ekranie dwadzieścia pikseli nie potrzebuje tysiąca trójkątów — potrzebuje dwudziestu pikseli, i dokładnie to daje mu imposter. Pomysł jest tak stary jak grafika czasu rzeczywistego, a w VFX ma nawet starszą rodzinę: matte painting, karty z drzewami w tle, wycinanki tłumu.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Atlas widoków plus wybór najbliższego</h2>
+    <p>Generator ustawia kamerę na sferze wokół obiektu, robi zdjęcie z każdego z kilkudziesięciu kierunków i zapisuje je w jednym atlasie — razem z mapą normalnych i głębią, żeby oświetlenie i przenikanie działały poprawnie. Przy renderowaniu wybiera się widok najbliższy aktualnemu kierunkowi patrzenia i miesza z sąsiednimi, żeby przejście nie skakało.</p>
+    <p>Rozkład kierunków na sferze robi się siatką oktahedralną, bo daje bardziej równomierne pokrycie niż naiwny podział na szerokość i długość geograficzną i nie zagęszcza próbek nad biegunami. Dodatek F rozkłada tę część na czynniki pierwsze, razem z interpolacją, która decyduje o tym, czy przejście między widokami widać.</p>
+    <div class="worked">
+      atlas 16 × 16 widoków, każdy 256 × 256 px<br>
+      = 4096 × 4096 na kanał · kolor + normalne + głębia<br><br>
+      koszt geometrii:      <span style="color:#4fc3c0;">2 trójkąty</span>   (kontra 1 200 w LOD3)<br>
+      koszt pamięci:        jeden atlas na <em>wszystkie</em> instancje<br>
+      opłacalność:          od ~40–60 m przy typowym drzewie i ogniskowej 35 mm
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Warunek</div>
+    <h2>Paralaksa, nie odległość</h2>
+    <p>Intuicja podpowiada, że imposter psuje się przy zbliżeniu. To tylko część prawdy — psuje się przy <span class="term-violet">zmianie punktu widzenia</span>. Obiekt oddalony o sto metrów, obserwowany nieruchomą kamerą, może być imposterem bez ryzyka. Ten sam obiekt przy jeździe kamery w bok zacznie zdradzać płaskość, bo elementy, które powinny się względem siebie przesuwać, przesuwają się razem.</p>
+    <p>Dlatego warunek użycia w VFX brzmi inaczej niż w grze: liczy się nie próg odległości, tylko <strong>kąt, o jaki zmienia się kierunek patrzenia na obiekt w trakcie ujęcia</strong>. Panorama z żurawia dyskwalifikuje impostery znacznie bliżej, niż statyczny kadr — i to jest liczba, którą pipeline potrafi policzyć z animacji kamery, zanim ktokolwiek zobaczy błąd na review.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Gdzie się to opłaca w filmie</div>
+    <h2>Trzy przypadki i jeden zakaz</h2>
+    <ul class="compact">
+      <li><strong>Wielkie zbiorowiska w tle.</strong> Las po drugiej stronie doliny, pole, dach miasta w oddali — miejsca, gdzie liczba obiektów jest absurdalna, a każdy z nich zajmuje kilkanaście pikseli.</li>
+      <li><strong>Odbicia i światło pośrednie.</strong> Geometria widoczna wyłącznie w odbiciu albo wpływająca tylko na oświetlenie pośrednie prawie nigdy nie potrzebuje pełnego detalu; to najbezpieczniejsze zastosowanie imposterów, bo błąd jest z definicji rozmyty.</li>
+      <li><strong>Tłum drugiego planu.</strong> Klasyczne zastosowanie kart, tylko z automatycznie wygenerowanym atlasem zamiast ręcznie wyciętych ujęć.</li>
+    </ul>
+    <p>I zakaz: nic, co znajduje się na krawędzi ostrości albo w niej. Rozmycie głębi ostrości ujawnia płaskość natychmiast — bo prawdziwy obiekt rozmywa się różnie w zależności od tego, jak daleko leżą jego części, a imposter rozmywa się jednolicie. To ta sama pułapka, która demaskuje karty w kompozycji, tylko przy większej rozdzielczości bardziej widoczna.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Imposter</dt>
+      <dd>Uproszczona reprezentacja obiektu jako obraz z atlasu widoków, rysowany na kilku trójkątach zwróconych do kamery.</dd>
+      <dt>Atlas widoków</dt>
+      <dd>Tekstura zawierająca zdjęcia obiektu z wielu kierunków, wraz z normalnymi i głębią.</dd>
+      <dt>Siatka oktahedralna</dt>
+      <dd>Sposób równomiernego rozłożenia kierunków na sferze, używany do rozmieszczenia widoków w atlasie.</dd>
+      <dt>Paralaksa</dt>
+      <dd>Względne przesunięcie elementów sceny przy zmianie punktu widzenia; zjawisko, którego imposter nie potrafi odtworzyć.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Imposter rozwiązuje problem obiektu, który jest daleko. Nie rozwiązuje problemu obiektu, którego jest milion. Następny rozdział jest o mechanizmie, dzięki któremu milion kopii kosztuje tyle, co jedna — i o tym, dlaczego obie branże doszły do niego niezależnie.</p>
   </div>
 
 <div class="site-nav chapter-nav">

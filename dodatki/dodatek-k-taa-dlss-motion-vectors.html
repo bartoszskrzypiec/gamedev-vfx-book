@@ -29,9 +29,43 @@
   <h1>TAA, DLSS, FSR i motion vectors od środka</h1>
   <p class="subtitle">Akumulacja w czasie, reprojekcja i ghosting — jak dokładnie działa rekonstrukcja temporalna i dlaczego bez wektorów ruchu nie ma się czego akumulować.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Rekonstrukcja temporalna zbiera informację z wielu klatek: każda liczona jest z lekko przesuniętym próbkowaniem, a wyniki sumują się w czasie.</li>
+      <li>Zestawienie klatek umożliwiają wektory ruchu; wszystko, czego one nie opisują — cienie, odbicia, przezroczystość — jest źródłem artefaktów.</li>
+      <li>Ghosting bierze się z przyjęcia historii, która nie pasuje; obrona polega na odrzucaniu jej, gdy odbiega od otoczenia bieżącej klatki.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Przesunięte próbkowanie i akumulacja</h2>
+    <p>Każda klatka renderowana jest z próbkowaniem przesuniętym o ułamek piksela według ustalonej sekwencji. Pojedyncza klatka jest przez to lekko inna, ale suma kilku daje pokrycie gęstsze niż którakolwiek z osobna — czyli obraz o efektywnie wyższej rozdzielczości i mniejszym aliasingu niż to, co faktycznie policzono.</p>
+    <p>Żeby sumować, trzeba wiedzieć, który piksel poprzedniej klatki odpowiada bieżącemu. Do tego służą <span class="term-violet">wektory ruchu</span>: dla każdego piksela zapisane przesunięcie tej samej części sceny między klatkami. Proces przeniesienia poprzedniego wyniku do bieżącej klatki nazywa się reprojekcją.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Czego wektory nie opisują</div>
+    <h2>Źródło wszystkich artefaktów</h2>
+    <p>Wektor ruchu opisuje ruch <em>powierzchni</em>. Nie opisuje ruchu tego, co się na niej odbija, ani ruchu cienia, ani tego, co widać przez szybę. Stąd systematyczna lista przypadków, w których reprojekcja zawodzi:</p>
+    <ul class="compact">
+      <li><strong>Odbicia</strong> — poruszają się inaczej niż powierzchnia, która je nosi.</li>
+      <li><strong>Cienie</strong> — przesuwają się razem ze źródłem światła, nie z podłożem.</li>
+      <li><strong>Przezroczystość</strong> — jeden piksel niesie kilka powierzchni o różnych ruchach.</li>
+      <li><strong>Odsłonięcie</strong> — obszar, który dopiero co był zasłonięty, nie ma żadnej historii do przeniesienia.</li>
+      <li><strong>Zmiana oświetlenia</strong> — powierzchnia się nie ruszyła, ale jej wygląd tak.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Ghosting</div>
+    <h2>Odrzucanie historii, która nie pasuje</h2>
+    <p>Jeśli przeniesiona historia jest błędna, na obrazie zostaje ślad poprzedniej zawartości — smuga za poruszającym się obiektem. Standardowa obrona: sprawdzić, czy przeniesiona wartość mieści się w zakresie kolorów sąsiedztwa piksela w bieżącej klatce, i jeśli nie — przyciąć ją do tego zakresu albo odrzucić.</p>
+    <p>Ten mechanizm jest kompromisem, którego nie da się ustawić dobrze dla wszystkiego naraz: ostre przycinanie usuwa smugi, ale też wyrzuca prawidłową historię, więc obraz robi się bardziej migotliwy; łagodne daje stabilny obraz ze smugami. Każdy wybór jest złym wyborem w jakiejś scenie — i to jest fundamentalny powód, dla którego techniki temporalnej nie da się „dostroić raz”.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co z tego dla VFX</div>
+    <h2>Jedna warstwa i jedno ostrzeżenie</h2>
+    <p><strong>Warstwa:</strong> wektory ruchu produkuje każdy pipeline VFX jako AOV do rozmycia ruchu. To znaczy, że wejście do wszystkich technik temporalnych już istnieje — koszt eksperymentu jest niski, zwłaszcza przy podglądzie i previzie.</p>
+    <p><strong>Ostrzeżenie:</strong> ta sama lista zawodnych przypadków obowiązuje w renderze offline przy denoiserach temporalnych. Odbicia, przezroczystość i odsłonięcia to obszary, w których denoiser temporalny może wprowadzić błąd nieobecny w żadnej pojedynczej klatce — a przy tym stabilny w czasie, więc trudniejszy do zauważenia niż szum. To jest dokładnie ten rodzaj artefaktu, który przechodzi przez przegląd klatek i wychodzi na projekcji (Rozdział 20).</p>
   </div>
 
 <div class="site-nav">

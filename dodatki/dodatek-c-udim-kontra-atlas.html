@@ -29,9 +29,43 @@
   <h1>UDIM kontra atlas: kiedy które</h1>
   <p class="subtitle">Dwa sposoby na to samo — rozłożenie powierzchni na wiele tekstur. Jeden zoptymalizowany pod pamięć GPU, drugi pod rozdzielczość hero assetu z bliska.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Wybór między atlasem a UDIM-ami sprowadza się do pytania: czy brakuje pamięci, czy rozdzielczości.</li>
+      <li>Atlas wygrywa przy wielu podobnych obiektach oglądanych z dystansu. UDIM wygrywa przy jednym obiekcie oglądanym z bliska.</li>
+      <li>Na jednym assecie mogą współistnieć — pod warunkiem, że granica została wyznaczona przed rozłożeniem UV, a nie po.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rozstrzygnięcie</div>
+    <h2>Tabela decyzyjna</h2>
+    <div class="worked">
+      <span style="color:#8b909b;">sytuacja                                     wybór</span><br>
+      wiele obiektów, jeden materiał, tło          atlas / trim sheet<br>
+      wiele obiektów, jeden z nich w zbliżeniu     atlas + UDIM na tym jednym<br>
+      jeden obiekt, cały widoczny z daleka         jedna mapa<br>
+      jeden obiekt, zbliżenie na fragment          UDIM<br>
+      bohater, kamera wszędzie                     UDIM, gęsto<br>
+      element powtarzalny (nit, deska, cegła)      trim sheet, zawsze
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Koszty</div>
+    <h2>Czym płaci każda z opcji</h2>
+    <p><strong>Atlas</strong> płaci rozdzielczością i sztywnością. Rozdzielczość dzieli się między obiekty, więc każdy dostaje ułamek. Sztywność bierze się stąd, że dołożenie elementu wymaga przepakowania — a przepakowanie unieważnia UV wszystkiego, co już z atlasu korzysta. Dlatego atlasy projektuje się z zapasem miejsca i zamyka wcześnie.</p>
+    <p><strong>UDIM</strong> płaci liczbą plików i obciążeniem cache'u. Asset z trzydziestoma kaflami po 4K to trzydzieści osobnych tekstur na mapę, razy pięć map — sto pięćdziesiąt plików do znalezienia, wczytania i utrzymania w pamięci (Rozdział 14). Przy jednym bohaterze to bez znaczenia; przy czterdziestu assetach zrobionych „na wszelki wypadek” w UDIM-ach to jest powód, dla którego shot nie mieści się w pamięci.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Współistnienie</div>
+    <h2>Jak wyznaczyć granicę</h2>
+    <p>Praktyczny sposób podziału jednego assetu: <span class="term-violet">to, co kamera zobaczy z bliska, dostaje własne UV i UDIM-y; reszta idzie na wspólny arkusz</span>. Granica biegnie po grupach powierzchni, nie po pojedynczych ścianach, i musi być zapisana w opisie assetu — bo za trzy tygodnie nikt nie odtworzy jej z samego pliku.</p>
+    <p>Technicznie oznacza to dwa materiały na jednym obiekcie i dwa układy UV. Renderer nie ma z tym problemu. Problemem bywa to, że nikt nie podjął decyzji świadomie i połowa assetu wylądowała na arkuszu przypadkiem — wtedy w zbliżeniu widać nagłą zmianę gęstości dokładnie w tym miejscu, w którym kamera się zatrzymuje.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przypadek szczególny</div>
+    <h2>Kiedy warto mieć obie wersje</h2>
+    <p>Asset, który występuje i w tle, i na pierwszym planie w innym shocie, bywa tańszy w dwóch wariantach niż w jednym kompromisowym: wersja na wspólnym arkuszu do rozrzucania w tle i wersja z UDIM-ami do zbliżeń. Warunek: obie muszą wyglądać jak ten sam obiekt, co jest łatwiejsze, niż się wydaje, jeśli wersja bliska powstała przez zamianę materiału, a nie przez ponowne malowanie tekstur.</p>
   </div>
 
 <div class="site-nav">

@@ -29,9 +29,47 @@
   <h1>Nanite od środka: klastry, hierarchia, ograniczenia</h1>
   <p class="subtitle">Rozdział 13 potraktował Nanite jako czarną skrzynkę. Tu otwieramy ją: klastry, hierarchiczny wybór poziomu i lista rzeczy, których ta technika nie umie.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Siatka dzielona jest na klastry po kilkadziesiąt–kilkaset trójkątów, a klastry łączone w hierarchię, w której każdy poziom jest uproszczeniem poziomu niższego.</li>
+      <li>Wybór poziomu odbywa się dla każdego klastra osobno, więc jeden obiekt ma jednocześnie różne szczegółowości w różnych miejscach — i to jest główna różnica wobec klasycznych LOD-ów.</li>
+      <li>Kluczowy warunek poprawności to brak dziur na styku klastrów o różnych poziomach; rozwiązuje się go, upraszczając grupy klastrów naraz i zamrażając ich wspólne krawędzie.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Klaster</div>
+    <h2>Jednostka, którą się wybiera</h2>
+    <p>Klasyczny LOD wybiera poziom dla całego obiektu. Geometria wirtualizowana wybiera go dla fragmentu — klastra kilkudziesięciu do kilkuset trójkątów. Dzięki temu bliska część skały może być w pełnym detalu, a jej dalszy kraniec jednocześnie mocno uproszczony, bez żadnego przełączania całości.</p>
+    <p>Klastry buduje się raz, przy przetwarzaniu assetu, grupując sąsiadujące trójkąty tak, by każda grupa była zwarta przestrzennie — bo zwartość decyduje o tym, czy dla całej grupy da się podjąć wspólną decyzję o poziomie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Hierarchia</div>
+    <h2>Uproszczenie grupami, nie pojedynczo</h2>
+    <p>Nad klastrami buduje się drzewo: cztery sąsiednie klastry są łączone i upraszczane do dwóch, te znowu do jednego, i tak aż do wierzchołka. Kluczowa subtelność: upraszcza się <strong>grupę naraz</strong>, a nie każdy klaster osobno. Gdyby upraszczać osobno, krawędzie między nimi rozjechałyby się i powstałyby dziury.</p>
+    <p>Rozwiązanie: krawędzie wewnętrzne grupy wolno upraszczać, krawędzie na jej granicy są zamrożone. Przy kolejnym poziomie granice przebiegają gdzie indziej, więc to, co było zamrożone, może zostać uproszczone teraz. Ten mechanizm — przesuwające się granice grup — jest istotą całej techniki i powodem, dla którego nie da się jej zrobić naiwnie.</p>
+    <div class="worked">
+      12 M trójkątów źródłowych<br>
+      → ~94 000 klastrów po ~128 trójkątów<br>
+      → hierarchia ~8 poziomów, każdy o połowę mniejszy<br><br>
+      w kadrze rysowanych typowo:  <span style="color:#4fc3c0;">kilka tysięcy klastrów</span><br>
+      niezależnie od tego, czy obiekt ma 12 M czy 200 M trójkątów
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Koszt</div>
+    <h2>Za co się płaci</h2>
+    <ul class="compact">
+      <li><strong>Rozmiar pliku.</strong> Przechowuje się pełną geometrię plus całą hierarchię uproszczeń — asset waży wielokrotnie więcej niż siatka z mapą normalnych.</li>
+      <li><strong>Przetwarzanie.</strong> Budowa klastrów i hierarchii to kosztowny etap importu, wykonywany raz, ale liczony w minutach dla dużych assetów.</li>
+      <li><strong>Stały narzut na klatkę.</strong> Wybór klastrów sam w sobie kosztuje; dla scen z małą liczbą trójkątów technika bywa wolniejsza od zwykłej geometrii.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Ograniczenia</div>
+    <h2>Czego to nie obejmuje</h2>
+    <p>Technika jest zaprojektowana pod geometrię sztywną i nieprzezroczystą. Wszystko, co się deformuje, co ma przezroczystość albo materiał wycinany maską, jest trudniejsze i bywa obsługiwane osobną ścieżką albo w ogóle wypada do klasycznej geometrii z własnymi LOD-ami. Zakres tego, co obsługiwane, przesuwa się z każdą wersją silnika, więc jedyną trwałą radą jest sprawdzenie w wersji, której się używa — i zaplanowanie, co się stanie z assetem, jeśli okaże się, że wypada poza zakres.</p>
+    <p>Dla pipeline'u VFX ważniejsza jest inna konsekwencja: to jest technika <em>jednej strony</em>. Asset zbudowany pod nią, bez retopologii i bez map normalnych, wymaga w renderze offline zupełnie innego traktowania — dwunastu milionów trójkątów nie posyła się na farmę bez uproszczenia. Decyzja z Rozdziału 13 o tym, gdzie mieszka detal, jest więc dla takiego assetu wiążąca wcześniej, niż się wydaje.</p>
   </div>
 
 <div class="site-nav">

@@ -29,9 +29,50 @@
   <h1>Imposters oktahedralne od środka</h1>
   <p class="subtitle">Jak zapakować widok obiektu ze wszystkich stron w jeden atlas i odtworzyć go z dowolnego kąta — z interpolacją, która nie miga przy ruchu kamery.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Widoki w atlasie rozmieszcza się na siatce oktahedralnej, bo daje równomierne pokrycie sfery bez zagęszczenia przy biegunach.</li>
+      <li>Sam kierunek to za mało: każdy widok niesie kolor, normalne i głębię, inaczej imposter nie da się oświetlić ani poprawnie przeciąć z geometrią.</li>
+      <li>Płynność przejścia zapewnia mieszanie trzech najbliższych widoków; bez korekty o głębię daje ono podwojone kontury.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rozmieszczenie</div>
+    <h2>Dlaczego oktaedr, a nie szerokość i długość</h2>
+    <p>Naiwne rozłożenie kierunków według szerokości i długości geograficznej zagęszcza próbki przy biegunach i rozrzedza na równiku — czyli daje najwięcej widoków tam, gdzie kamera bywa najrzadziej. Rzutowanie oktahedralne odwzorowuje sferę na kwadrat z niemal równomierną gęstością i, co równie ważne, jest tanie w obie strony: zamiana kierunku na współrzędne w atlasie to kilka operacji arytmetycznych bez funkcji trygonometrycznych.</p>
+    <div class="worked">
+      atlas 16 × 16  =  256 widoków<br>
+      kąt między sąsiednimi widokami  ≈  <span style="color:#4fc3c0;">11°</span><br><br>
+      obiekt oglądany z 60 m przy ogniskowej 50 mm:<br>
+      obrót kamery o 11° wokół niego  =  przejazd ~11,5 m w bok<br>
+      → poniżej tego dystansu przejścia między widokami są widoczne
+    </div>
+    <p>Ostatni wiersz jest praktyczną wersją warunku z Rozdziału 11: imposter psuje się nie od odległości, tylko od tego, o ile stopni zmieni się kierunek patrzenia w trakcie ujęcia.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Zawartość widoku</div>
+    <h2>Trzy warstwy, nie jedna</h2>
+    <ul class="compact">
+      <li><strong>Kolor z alfą</strong> — sam obraz obiektu; alfa wycina sylwetkę.</li>
+      <li><strong>Normalne</strong> — bez nich imposter nie reaguje na zmianę oświetlenia i w scenie o innym świetle wygląda jak wklejka. Zapisywane w przestrzeni świata, nie stycznej, bo powierzchnia karty nie odpowiada powierzchni obiektu.</li>
+      <li><strong>Głębia</strong> — odległość od płaszczyzny karty. Pozwala poprawnie przecinać imposter z geometrią (drzewo wchodzące w zbocze) i koryguje paralaksę przy mieszaniu widoków.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mieszanie</div>
+    <h2>Trzy widoki i korekta głębi</h2>
+    <p>Wybranie jednego najbliższego widoku daje skok przy każdej zmianie kierunku. Standardowe rozwiązanie: znaleźć trzy widoki otaczające aktualny kierunek na siatce i zmieszać je wagami proporcjonalnymi do bliskości.</p>
+    <p>Samo mieszanie daje jednak charakterystyczny artefakt — podwojone kontury, bo ten sam element obiektu leży w każdym z widoków w innym miejscu. Poprawka polega na przesunięciu próbkowania każdego widoku o wektor wynikający z jego głębi i różnicy kątów: element leżący daleko od płaszczyzny karty przesuwa się mocniej niż element leżący blisko. To jest dokładnie ta sama poprawka, którą stosuje się przy mapowaniu paralaksy, tylko zastosowana między widokami zamiast wewnątrz jednego.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kiedy nie warto</div>
+    <h2>Trzy przypadki</h2>
+    <ul class="compact">
+      <li><strong>Obiekt z dużą głębią.</strong> Rozłożyste drzewo ma elementy oddalone od płaszczyzny karty o metry; korekta głębi radzi sobie do pewnego stopnia, ale przy dużej paralaksie i tak widać płaskość.</li>
+      <li><strong>Obiekt przezroczysty lub włochaty.</strong> Alfa w atlasie jest jedną wartością na piksel; liście, włosy i dym potrzebują czegoś więcej, a wersja uśredniona wygląda jak wycinanka.</li>
+      <li><strong>Obiekt oświetlony inaczej niż w momencie generowania.</strong> Normalne pomagają, ale samozacienienie zostaje zapieczone w atlasie — imposter wygenerowany w rozproszonym świetle w ostrym słońcu zachowa miękkie cienie własne.</li>
+    </ul>
   </div>
 
 <div class="site-nav">

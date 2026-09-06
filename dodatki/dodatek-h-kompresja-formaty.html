@@ -29,9 +29,49 @@
   <h1>Formaty i kompresja tekstur: BC1–BC7, ASTC, DWAA</h1>
   <p class="subtitle">Co dokładnie robi każdy z tych formatów z Twoimi pikselami, gdzie artefakty pojawiają się najpierw i dlaczego mapa normalnych ma własne reguły.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Formaty blokowe różnią się liczbą bitów na piksel i tym, ile niezależnych wartości potrafią zakodować w jednym bloku 4×4.</li>
+      <li>Artefakty pojawiają się najpierw tam, gdzie w bloku dzieje się dużo naraz: na ostrych krawędziach, w gradientach i w kanałach spakowanych obok siebie bez związku.</li>
+      <li>Mapy normalnych mają własny format zapisujący dwa kanały, bo kompresja projektowana pod kolor rozjeżdża wektory w sposób widoczny na gładkich powierzchniach.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rodzina BC</div>
+    <h2>Co który format potrafi</h2>
+    <div class="worked">
+      <span style="color:#8b909b;">format   bity/px   kanały   typowe zastosowanie</span><br>
+      BC1       4       RGB      kolor bez alfy, tło, wnętrza bloków<br>
+      BC3       8       RGBA     kolor z pełną alfą<br>
+      BC4       4       R        pojedyncza mapa danych (maska, wysokość)<br>
+      BC5       8       RG       <span style="color:#4fc3c0;">mapy normalnych</span> — trzeci kanał odtwarzany obliczeniowo<br>
+      BC6H     8       RGB(HDR) mapy środowiskowe o wysokim zakresie<br>
+      BC7       8       RGBA     kolor wysokiej jakości, wiele trybów bloku<br><br>
+      ASTC   zmienne    do RGBA  format o wybieralnym rozmiarze bloku (4×4 … 12×12)
+    </div>
+    <p>Różnica między BC1 a BC7 przy tej samej liczbie kanałów sprowadza się do tego, ile niezależnych „kolorów końcowych” blok potrafi opisać i na ile sposobów wolno mu podzielić swoje 16 pikseli między nie. BC1 ma jeden podział i dwa kolory; BC7 ma kilkanaście trybów i wybiera najlepszy dla konkretnego bloku — stąd wyraźnie lepszy wynik przy tej samej wadze co BC3.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Gdzie pojawia się pierwszy artefakt</div>
+    <h2>Trzy miejsca</h2>
+    <ul class="compact">
+      <li><strong>Ostra krawędź o dużym kontraście.</strong> Blok musi opisać dwa bardzo różne kolory i przejście między nimi; przy ubogich trybach daje to charakterystyczne „schodki” i przebarwienia wzdłuż krawędzi. Najbardziej widoczne na tekstach i logotypach.</li>
+      <li><strong>Płynny gradient.</strong> Odwrotny problem — blok interpoluje między dwoma kolorami w kilku krokach, więc gładkie przejście rozpada się na pasy. Widać to na niebie, na dużych jednolitych powierzchniach i w mapach wysokości.</li>
+      <li><strong>Spakowane kanały bez związku.</strong> Roughness w R, metalness w G, AO w B to popularna oszczędność — i najgorszy przypadek dla kompresji, bo blok szuka wspólnego opisu dla trzech niezależnych obrazów. Jeśli już pakować, to kanały skorelowane, a maski krytyczne trzymać osobno w BC4.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Normalne</div>
+    <h2>Dlaczego dwa kanały, nie trzy</h2>
+    <p>Wektor normalnej jest znormalizowany, więc trzecia składowa da się odtworzyć z dwóch pozostałych. Zapisanie dwóch kanałów w formacie o wyższej precyzji na kanał daje wyraźnie lepszy wynik niż zapisanie trzech w formacie kolorowym — a błąd w normalnych jest szczególnie dotkliwy, bo objawia się nie szumem, tylko widocznymi pasami i zniekształceniem odbicia na gładkich powierzchniach.</p>
+    <p>Uwaga praktyczna przy przenoszeniu: normalna zapisana dwukanałowo wymaga odtworzenia trzeciej składowej w materiale. Jeśli asset trafia do renderera offline, który tego nie robi automatycznie, dostaniemy powierzchnię wyglądającą prawie dobrze — i to jest jeden z tych błędów, które przechodzą przez przegląd i wychodzą dopiero na finalnej klatce.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Strona offline</div>
+    <h2>EXR i kompresja obrazu ruchomego</h2>
+    <p>Po stronie renderu kompresja ma inny cel: zmniejszyć plik na dysku, nie w pamięci. Formaty stratne z rodziny DWA osiągają wysokie współczynniki przy niewielkiej stracie, ale mają dwie cechy, o których trzeba pamiętać w pipelinie: strata kumuluje się przy wielokrotnym zapisie i odczycie w kompozycji, a artefakty pojawiają się na ostrych krawędziach o dużym kontraście — czyli dokładnie tam, gdzie zwykle jest interesująca zawartość.</p>
+    <p>Reguła jest ta sama co w Rozdziale 15: pliki pośrednie w łańcuchu obróbki trzyma się bezstratnie, a stratnie zapisuje wyłącznie to, co już nie będzie ponownie przetwarzane.</p>
   </div>
 
 <div class="site-nav">

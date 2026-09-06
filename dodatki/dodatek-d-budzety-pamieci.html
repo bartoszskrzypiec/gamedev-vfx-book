@@ -29,9 +29,61 @@
   <h1>Budżety pamięci: skąd biorą się liczby</h1>
   <p class="subtitle">Dlaczego akurat 8 GB, akurat 4096 px i akurat 150 tysięcy trójkątów — rozłożenie realnego budżetu na czynniki, które da się policzyć zamiast zgadywać.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Budżet wyprowadza się z pamięci węzła renderującego, a nie z intuicji — ale rachunek z Rozdziału 4 był uproszczony i ten dodatek pokazuje, czego w nim brakowało.</li>
+      <li>Trzy poprawki zmieniają wynik istotnie: cache tekstur nie trzyma pełnej rozdzielczości, geometria i cache symulacji też zajmują pamięć, a rozkład assetów w shocie nie jest równy.</li>
+      <li>Wynikiem nie ma być jedna liczba, tylko przydział na klasy assetów plus rezerwa — bo shot bez rezerwy pada przy pierwszym zaskoczeniu.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Poprawka pierwsza</div>
+    <h2>Cache nie trzyma wszystkiego</h2>
+    <p>Rachunek „suma map wszystkich widocznych assetów” to górna granica, która w praktyce nie występuje. Renderer wczytuje kafle na żądanie i tylko te poziomy mip, które są potrzebne przy danej wielkości obiektu na ekranie (Rozdział 14). Realne zużycie zależy więc od tego, jak duże są obiekty w kadrze — czyli od tego samego, co decyduje o poziomach LOD.</p>
+    <div class="worked">
+      suma map w scenie                          4 600 MB<br>
+      realne zapotrzebowanie po uwzględnieniu mip:<br>
+        assety bliskie (5 szt., pełna rozdz.)      850 MB<br>
+        plan średni (30 szt., mip 1–2)             620 MB<br>
+        tło (150 szt., mip 3+)                     280 MB<br>
+      ————————————<br>
+      szczyt cache'u                            <span style="color:#4fc3c0;">~1 750 MB</span>  (38% sumy)
+    </div>
+    <p>Wniosek praktyczny: budżet liczony jako suma map jest zbyt ostrożny mniej więcej trzykrotnie. Budżet liczony jako „i tak się zmieści” jest zbyt optymistyczny dokładnie wtedy, gdy kamera zbliży się do czegoś, czego nikt nie przewidział.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Poprawka druga</div>
+    <h2>Tekstury to nie wszystko</h2>
+    <div class="worked">
+      pamięć węzła                              128 GB<br>
+      − system operacyjny i renderer               6 GB<br>
+      − geometria po subdivision                  28 GB<br>
+      − struktury przyspieszające (R.10)          14 GB<br>
+      − cache symulacji, wolumeny                 22 GB<br>
+      − rezerwa (20%)                             26 GB<br>
+      ————————————<br>
+      zostaje na cache tekstur                  <span style="color:#4fc3c0;">32 GB</span>
+    </div>
+    <p>Rezerwa nie jest tchórzostwem — jest pozycją budżetową. Render, który mieści się dokładnie, pada przy pierwszym shocie z dodatkowym elementem, a padnięcie na farmie kosztuje więcej niż niewykorzystane 26 GB.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przydział</div>
+    <h2>Z jednej liczby na klasy</h2>
+    <p>Ostatni krok to rozdzielenie tego, co zostało, na klasy assetów proporcjonalnie do uwagi widza (Rozdział 4), i przeliczenie na coś, co artysta może sprawdzić bez uruchamiania renderu — czyli na liczbę i rozdzielczość map.</p>
+    <div class="worked">
+      32 GB cache tekstur, rozkład 45 / 35 / 20<br><br>
+      bohaterowie   14,4 GB / 5 szt.   =  2,9 GB  → ~24 map 4K half<br>
+      plan średni   11,2 GB / 30 szt.  =  380 MB  → ~11 map 2K<br>
+      tło            6,4 GB / 150 szt. =   43 MB  → ~1 mapa 2K<br><br>
+      ostatni wiersz jest powodem, dla którego tło <em>musi</em> dzielić<br>
+      wspólne arkusze — 43 MB na asset to nie jest budżet na własne tekstury
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kontrola</div>
+    <h2>Liczba, którą warto raportować co tydzień</h2>
+    <p>Budżet, którego nikt nie mierzy po ustaleniu, przestaje istnieć w ciągu miesiąca. Minimalna forma kontroli to cotygodniowy raport z trzema pozycjami: szczyt zużycia pamięci na reprezentatywnym shocie, liczba assetów przekraczających swoją klasę i liczba użytych furtek. Trzy liczby, jeden wykres, pięć minut na spotkaniu — i to wystarczy, żeby problem był widoczny, zanim stanie się awarią.</p>
   </div>
 
 <div class="site-nav">

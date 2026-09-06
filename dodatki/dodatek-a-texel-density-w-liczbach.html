@@ -13,7 +13,7 @@
 <nav class="topnav">
   <a class="topnav__brand" href="../index.html">Gamedev <span>w VFX</span></a>
   <div class="topnav__links">
-    <a href="../index.html">Spis treści</a>
+    <a href="../rozdzialy/rozdzial-28-epilog-jeden-asset.html">← R.28</a>
     <a href="../index.html">Spis treści</a>
     <a href="../rozdzialy/rozdzial-06-atlasy-udim-texel-density.html">↑ R.6</a>
     <a href="dodatek-b-anatomia-trim-sheetu.html">Dod. B →</a>
@@ -29,9 +29,60 @@
   <h1>Texel density w liczbach</h1>
   <p class="subtitle">Rozdział 6 podał zasadę. Tu są liczby: jak policzyć px/cm dla dowolnego assetu, jakie wartości stosuje się realnie i co się dzieje, gdy dwa sąsiadujące obiekty mają różne.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Texel density liczy się z trzech liczb: rozdzielczości mapy, udziału wysepki w przestrzeni UV i rozmiaru powierzchni w świecie.</li>
+      <li>Wartość podaje się w px/cm albo px/m; ta sama liczba w obu jednostkach różni się o sto, co jest źródłem połowy nieporozumień.</li>
+      <li>Wybiera się ją z odległości, z jakiej obiekt będzie oglądany, i zaokrągla do wartości z tabeli — żeby wszystko w secie należało do tej samej rodziny.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rachunek</div>
+    <h2>Trzy liczby, jedno dzielenie</h2>
+    <p>Rozdział 6 podał zasadę. Tu jest sposób policzenia jej dla dowolnego assetu, w formie, którą da się wpisać do skryptu walidującego (Dodatek N).</p>
+    <div class="worked">
+      density [px/cm]  =  ( rozdzielczość [px] × udział_UV )  /  rozmiar [cm]<br><br>
+      gdzie <em>udział_UV</em> to długość krawędzi wysepki w przestrzeni UV (0…1),<br>
+      a <em>rozmiar</em> to długość odpowiadającej jej krawędzi w świecie.<br><br>
+      przykład: krawędź 2,4 m zajmująca 0,75 szerokości mapy 4096<br>
+      (4096 × 0,75) / 240 cm  =  3072 / 240  =  <span style="color:#4fc3c0;">12,8 px/cm</span>
+    </div>
+    <p>W praktyce nie liczy się tego ręcznie dla każdej wysepki — narzędzia do rozkładania UV pokazują gęstość na bieżąco, a walidator sprawdza ją automatycznie. Wzór jest tu po to, żeby wiedzieć, co te narzędzia właściwie pokazują, i żeby dało się to sprawdzić, gdy pokazują coś dziwnego.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Tabela</div>
+    <h2>Wartości, od których warto zaczynać</h2>
+    <p>Liczby poniżej nie są normą branżową — są punktem wyjścia, od którego odstępuje się świadomie. Podane w obu jednostkach, bo obie są w użyciu.</p>
+    <div class="worked">
+      <span style="color:#8b909b;">zastosowanie                       px/cm      px/m</span><br>
+      teren, wielkie powierzchnie tła      1,28       128<br>
+      architektura planu dalszego          2,56       256<br>
+      standard środowiskowy                5,12       512<br>
+      obiekty w zasięgu ręki              10,24      1024<br>
+      rekwizyt w zbliżeniu                20,48      2048<br>
+      bohater, zbliżenie makro            40,96+     4096+<br><br>
+      każdy wiersz to dwukrotność poprzedniego — celowo:<br>
+      przejście o jeden stopień odpowiada podwojeniu rozdzielczości mapy
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dobór</div>
+    <h2>Z odległości, nie z ambicji</h2>
+    <p>Sensowny sposób wyboru wiersza z tabeli: oszacuj, jak dużą część kadru obiekt zajmie w najbliższym ujęciu, i dobierz gęstość tak, żeby na piksel obrazu przypadał mniej więcej jeden teksel. Więcej tekseli na piksel to zapłacona i niewidoczna pamięć; mniej — widoczne rozmycie.</p>
+    <div class="worked">
+      obraz 4096 px szerokości, obiekt zajmuje 30% kadru  =  1229 px<br>
+      obiekt ma 180 cm szerokości<br><br>
+      potrzebna gęstość  =  1229 / 180  =  6,8 px/cm<br>
+      → z tabeli bierzemy <span style="color:#4fc3c0;">10,24</span>, nie 5,12 — zaokrąglamy w górę,<br>
+        bo zejście niżej widać, a wejście wyżej tylko kosztuje
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Sąsiedztwo</div>
+    <h2>Co się dzieje, gdy dwa obiekty mają różną gęstość</h2>
+    <p>Różnica jednego stopnia z tabeli (dwukrotność) jest zwykle niezauważalna, jeśli obiekty nie stykają się bezpośrednio. Różnica dwóch stopni jest widoczna wszędzie. Na styku — ściana i przylegająca do niej listwa — widoczna jest już różnica jednego stopnia, bo oko porównuje ostrość przez krawędź.</p>
+    <p>Stąd praktyczna reguła: <strong>obiekty stykające się mają tę samą gęstość, obiekty w tej samej scenerii nie różnią się o więcej niż jeden stopień</strong>, a wyjątkiem są bohaterowie kadru, którzy odstają świadomie i zwykle są oddzieleni od reszty głębią ostrości.</p>
   </div>
 
 <div class="site-nav">

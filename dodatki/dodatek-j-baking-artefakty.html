@@ -29,9 +29,41 @@
   <h1>Baking: cage, ray distance i katalog artefaktów</h1>
   <p class="subtitle">Skąd biorą się te wszystkie dziwne smugi na wypalonej mapie normalnych — i który parametr odpowiada za każdą z nich.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Większość artefaktów wypalania ma jedną z czterech przyczyn: zły cage, zły zasięg promienia, złe UV albo niezgodność grup wygładzania.</li>
+      <li>Każdy z nich ma charakterystyczny wygląd, więc da się rozpoznać przyczynę z samej mapy, bez zgadywania.</li>
+      <li>Kolejność diagnozy: najpierw UV, potem grupy wygładzania, dopiero na końcu cage — bo dwa pierwsze psują wynik w sposób, którego cage nie naprawi.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Katalog</div>
+    <h2>Objaw, przyczyna, naprawa</h2>
+    <ul class="compact">
+      <li><strong>Ostre, geometryczne dziury w mapie.</strong> Promień nie trafił w nic — cage jest zbyt ciasny albo zasięg za mały, więc wystające fragmenty siatki wysokiej leżą poza obszarem poszukiwania. Naprawa: rozdmuchać cage lokalnie w tym miejscu, nie globalnie.</li>
+      <li><strong>Fragment jednej części modelu odbity na innej.</strong> Cage zbyt luźny albo zasięg zbyt duży: promień z ucha przeleciał przez pustkę i trafił w policzek. Naprawa: zmniejszyć zasięg, a jeśli to nie wystarczy — wypalić części osobno.</li>
+      <li><strong>Gradient „rozlewający się” z krawędzi wysepki.</strong> Zbyt mały margines; przy niższych poziomach mip sąsiednie wysepki wchodzą na siebie. Naprawa: zwiększyć margines, wypalić ponownie.</li>
+      <li><strong>Wyraźne pasy wzdłuż krawędzi twardych.</strong> Niezgodność grup wygładzania z układem wysepek UV: siatka niska ma twardą krawędź tam, gdzie UV są ciągłe (albo odwrotnie). Naprawa: podzielić wysepki dokładnie tam, gdzie są twarde krawędzie.</li>
+      <li><strong>Ten sam detal w dwóch miejscach.</strong> Nakładające się wysepki — dwa fragmenty powierzchni zapisują się w te same piksele. Naprawa: osobny, nienachodzący kanał UV do wypalania (Rozdział 16).</li>
+      <li><strong>Delikatny szum na całej mapie AO.</strong> Za mało próbek. Naprawa: zwiększyć liczbę próbek; to jedyny artefakt na tej liście, który da się usunąć samą cierpliwością.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kolejność diagnozy</div>
+    <h2>Nie zaczynaj od cage'a</h2>
+    <p>Kuszące jest zacząć od parametrów wypalania, bo są pod ręką. To zwykle strata czasu, bo dwa najczęstsze problemy leżą w assecie, nie w ustawieniach. Kolejność, która oszczędza najwięcej prób:</p>
+    <ol>
+      <li>Sprawdź UV: nakładki, margines, czy podział wysepek odpowiada twardym krawędziom.</li>
+      <li>Sprawdź grupy wygładzania i normalne siatki niskiej.</li>
+      <li>Sprawdź, czy obie siatki są w tej samej skali i pozycji (Rozdział 9 — to zdarza się częściej, niż wypada przyznać).</li>
+      <li>Dopiero teraz strojenie cage'a i zasięgu, lokalnie w miejscach, które nadal nie wychodzą.</li>
+    </ol>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Uwaga dla VFX</div>
+    <h2>Wypalaj dane, nie wygląd</h2>
+    <p>Wszystkie powyższe problemy dotyczą przede wszystkim map normalnych, czyli tej mapy, którą w VFX wypala się najrzadziej (Rozdział 16). Mapy pomocnicze — krzywizna, AO, pozycja, grubość — są znacznie odporniejsze: nie niosą kierunku, więc drobne niedokładności cage'a dają w nich delikatne rozmycie zamiast widocznego błędu. To dodatkowy argument za tym, żeby zaczynać właśnie od nich: dają większość korzyści przy ułamku kłopotów.</p>
   </div>
 
 <div class="site-nav">

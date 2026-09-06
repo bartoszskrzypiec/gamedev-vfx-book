@@ -29,9 +29,62 @@
   <h1>Anatomia trim sheetu krok po kroku</h1>
   <p class="subtitle">Budowa jednego arkusza od pustego płótna: podział pasów, marginesy, co daje się powtarzać w poziomie, a co nie, i jak zaplanować go pod UV, zanim powstanie pierwszy piksel.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Arkusz projektuje się od podziału na pasy, a podział wynika z tego, jakie profile są potrzebne i jak wysoki jest każdy z nich w świecie.</li>
+      <li>Wysokości pasów są potęgami dwójki w tekselach, a ich odpowiedniki w świecie wynikają z przyjętej texel density — to te dwie liczby wiążą arkusz z geometrią.</li>
+      <li>Kolejność pracy: lista profili → podział pasów → geometria wysoka → wypalenie → materiał. Odwrócenie jej kończy się przepakowywaniem arkusza.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Krok 1</div>
+    <h2>Lista profili, zanim powstanie cokolwiek</h2>
+    <p>Zacznij od spisu tego, co arkusz ma pokryć — nie obiektów, tylko <em>profili</em>. Dla wnętrza przemysłowego typowa lista wygląda tak: profil górny (gzyms), panel z wgłębieniem, rura z kołnierzem, pas nitów, pas gładki, listwa dolna, krawędź fazowana. Siedem pozycji pokrywa zaskakująco duży set.</p>
+    <p>Test poprawności listy: weź dziesięć obiektów z setu i sprawdź, czy każdy da się złożyć z pozycji na liście. Jeśli któryś wymaga ósmego profilu, dopisz go teraz — dopisanie po wypaleniu arkusza oznacza przepakowanie i poprawienie UV wszystkiego, co już go używa.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Krok 2</div>
+    <h2>Podział wysokości</h2>
+    <p>Każdy profil dostaje pas o wysokości będącej potęgą dwójki, a suma pasów musi dać wysokość arkusza. Przy 2048 typowy podział wygląda tak:</p>
+    <div class="worked">
+      512  gzyms / profil górny        (najwięcej detalu, najczęściej w kadrze)<br>
+      512  pas gładki                  (najczęściej używany — nie oszczędzaj na nim)<br>
+      256  panel z wgłębieniem<br>
+      256  rura z kołnierzem<br>
+      256  listwa dolna<br>
+      128  nity<br>
+      128  pas zużycia / rdza<br>
+      ————<br>
+      2048<br><br>
+      przy density 10,24 px/cm pas 512 px  =  <span style="color:#4fc3c0;">50 cm w świecie</span><br>
+      pas 128 px  =  12,5 cm — i to jest realna wysokość profilu, jaki tam zmieścisz
+    </div>
+    <p>Ostatnie przeliczenie jest tym, co najczęściej się pomija: pas ma nie tylko wysokość w tekselach, ale i odpowiadającą jej wysokość w świecie. Profil gzymsu wysokiego na 80 cm nie zmieści się w pasie 512 px przy tej gęstości — trzeba albo dać mu 1024, albo obniżyć gęstość, albo zmniejszyć gzyms. Ta decyzja należy do etapu projektowania arkusza, nie do etapu rozkładania UV.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Krok 3</div>
+    <h2>Powtarzalność w poziomie i marginesy</h2>
+    <ul class="compact">
+      <li><strong>Lewa krawędź musi pasować do prawej</strong> dla każdego pasa osobno — inaczej rozciągnięcie U poza 1,0 pokaże szew.</li>
+      <li><strong>Margines pionowy między pasami:</strong> co najmniej tyle pikseli, ile wynosi liczba poziomów mip, które będą używane, razy dwa. Przy sześciu poziomach — 12 px, w praktyce zaokrągla się do 16.</li>
+      <li><strong>Nie umieszczaj detalu na samej granicy pasa.</strong> Przy przyklejaniu UV drobne niedokładności są nieuniknione; detal odsunięty o kilka pikseli od krawędzi wybacza je bez śladu.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Krok 4</div>
+    <h2>Wypalanie i materiał</h2>
+    <p>Geometrię wysokiej rozdzielczości ustawia się jako pasy równoległe nad płaską płytą i wypala z góry (Rozdział 16). Ponieważ wypalanie jest tu płaskie i ortograficzne, znikają wszystkie problemy z cage'em — to najprostszy przypadek bakingu, jaki istnieje, i to jest jeden z powodów, dla których trim sheety są tanie w produkcji.</p>
+    <p>Na wyjściu: kolor bazowy, normalne, roughness, metalness, wysokość, plus wypalone krzywizna i AO jako wejścia dla masek zużycia. Mapa wysokości jest tu ważniejsza niż w grze, bo w renderze offline napędza prawdziwy displacement (Rozdział 5).</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Test</div>
+    <h2>Trzy pytania przed publikacją arkusza</h2>
+    <ol>
+      <li>Czy da się z tego zbudować dziesięć obiektów z listy z kroku 1, bez sięgania po nic innego?</li>
+      <li>Czy pas gładki jest wystarczająco duży? (Jest najczęściej używany i najczęściej niedoszacowany.)</li>
+      <li>Czy jest na arkuszu cokolwiek charakterystycznego — napis, wyraźna plama, rozpoznawalne wgniecenie? Jeśli tak, przenieś to do dekali (Rozdział 8), zanim pojawi się w czterdziestu miejscach naraz.</li>
+    </ol>
   </div>
 
 <div class="site-nav">

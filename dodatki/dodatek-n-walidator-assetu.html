@@ -16,7 +16,6 @@
     <a href="dodatek-m-pdg-tops.html">← Dod. M</a>
     <a href="../index.html">Spis treści</a>
     <a href="../rozdzialy/rozdzial-25-walidacja-ci.html">↑ R.25</a>
-    <a href="../index.html">Spis treści</a>
   </div>
 </nav>
 <div class="page">
@@ -29,9 +28,57 @@
   <h1>Walidator assetu: lista kontrolna, którą da się zautomatyzować</h1>
   <p class="subtitle">Konkretne testy, gotowe do wpięcia w publish — od skali i pivota po nakładające się UV i nieużywane materiały, z uzasadnieniem każdego z nich.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Lista testów gotowa do wpięcia w publikację, z uzasadnieniem każdego — bo test bez uzasadnienia jest pierwszym, który ktoś wyłączy.</li>
+      <li>Podzielona na trzy poziomy z Rozdziału 25: błąd blokuje publikację, ostrzeżenie trafia do raportu, informacja tylko się zapisuje.</li>
+      <li>Wszystkie sprawdzenia są rozstrzygalne bez opinii; żadne nie dotyczy tego, czy asset wygląda dobrze.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Poziom BŁĄD</div>
+    <h2>Blokuje publikację</h2>
+    <ul class="compact">
+      <li><strong>Skala różna od 1,0 albo niewypalone transformacje.</strong> Psuje instancje, symulacje i eksport; naprawa po fakcie wymaga sprawdzenia wszystkiego, co asset już zdążyło użyć.</li>
+      <li><strong>Brak którejś z wymaganych map.</strong> Materiał niekompletny renderuje się z wartością domyślną, co wygląda jak decyzja artystyczna i bywa odkrywane bardzo późno.</li>
+      <li><strong>Nakładające się wysepki w kanale przeznaczonym do wypalania.</strong> Uniemożliwia poprawne wypalenie danych (Dodatek J).</li>
+      <li><strong>Mapa danych zapisana jako sRGB.</strong> Roughness, normalne, wysokość i maski muszą być liniowe; błąd daje efekt „prawie dobry”, czyli najgorszy rodzaj (Rozdział 3).</li>
+      <li><strong>Nazwa niezgodna ze wzorcem.</strong> Bez tego automatyzacja niżej w pipelinie nie ma się czego uchwycić.</li>
+      <li><strong>Trójkąty o zerowej powierzchni, zdublowane wierzchołki, niespójne normalne.</strong> Każde z nich powoduje trudne do zdiagnozowania błędy w symulacji i renderze.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Poziom OSTRZEŻENIE</div>
+    <h2>Publikacja przechodzi, wpis do raportu</h2>
+    <ul class="compact">
+      <li><strong>Przekroczony budżet klasy assetu.</strong> Bywa uzasadnione (furtka z Rozdziału 4), ale musi być widoczne.</li>
+      <li><strong>Texel density poza uzgodnionym zakresem.</strong> Zwykle oznacza przeskalowanie obiektu po rozłożeniu UV (Rozdział 6).</li>
+      <li><strong>Rozdzielczość mapy nie będąca potęgą dwójki.</strong> Utrudnia mipmapowanie i bywa objawem przypadkowego eksportu.</li>
+      <li><strong>Margines UV mniejszy niż wymagany dla liczby poziomów mip.</strong></li>
+      <li><strong>Więcej materiałów, niż przewiduje klasa assetu.</strong> Zwykle znak, że asset nie korzysta ze wspólnego arkusza, choć mógłby.</li>
+      <li><strong>N-gony w obszarze podlegającym deformacji.</strong></li>
+      <li><strong>Pivot dalej niż kilka centymetrów od miejsca uzgodnionego dla klasy.</strong></li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Poziom INFORMACJA</div>
+    <h2>Do statystyk</h2>
+    <p>Liczba trójkątów, sumaryczna waga tekstur, liczba materiałów, liczba wysepek UV, czas przetwarzania, autor i wersja narzędzia. Nic z tego nie blokuje niczego — a zebrane przez kilka miesięcy pozwalają odpowiedzieć na pytania, na które inaczej odpowiada się przeczuciem: czy assety rosną, które klasy najczęściej przekraczają budżet, ile trwa publikacja.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wymagania wobec komunikatów</div>
+    <h2>Bez tego system zostanie obejściony</h2>
+    <p>Każdy komunikat musi zawierać trzy elementy: <strong>co</strong> jest nie tak, <strong>gdzie</strong> dokładnie i <strong>jak to naprawić</strong>. Porównanie dwóch wersji tego samego błędu:</p>
+    <div class="worked">
+      <span style="color:#e8a33d;">źle:</span>  Walidacja nie powiodła się (kod 7)<br><br>
+      <span style="color:#4fc3c0;">dobrze:</span>  BŁĄD · prop_crate_A · skala obiektu wynosi 0,01<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wypal transformacje (Freeze Transformations)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i opublikuj ponownie.<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dlaczego: skala inna niż 1,0 psuje instancjonowanie<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i cache symulacji w dziale FX.
+    </div>
+    <p>Ostatnia linia — „dlaczego” — jest tym, co odróżnia system, który ludzie stosują, od systemu, który obchodzą. Jest też jedynym miejscem, w którym warto wpisać odsyłacz do rozdziału tej książki.</p>
   </div>
 
 <div class="site-nav">

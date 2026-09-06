@@ -29,9 +29,39 @@
   <h1>MaterialX i OpenPBR jako wspólny język materiału</h1>
   <p class="subtitle">Próba, żeby ten sam materiał znaczył to samo w silniku gry i w path tracerze — co ten standard rzeczywiście gwarantuje, a czego nie.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>MaterialX opisuje graf materiału w formie niezależnej od tego, kto go wykona, wraz z biblioteką węzłów o zdefiniowanym znaczeniu.</li>
+      <li>OpenPBR to model powierzchni o ustalonym zestawie parametrów, mający znaczyć to samo w każdej implementacji.</li>
+      <li>Standard gwarantuje przenośność opisu i zgodność interpretacji parametrów. Nie gwarantuje identycznego obrazu, bo ten zależy od sposobu liczenia oświetlenia.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co dokładnie standaryzuje MaterialX</div>
+    <h2>Trzy warstwy</h2>
+    <ul class="compact">
+      <li><strong>Format zapisu grafu</strong> — węzły, połączenia, wartości, w postaci, którą da się przeczytać niezależnie od aplikacji.</li>
+      <li><strong>Biblioteka węzłów o zdefiniowanej semantyce</strong> — „mnożenie”, „mieszanie”, „odczyt tekstury”, „szum” — z opisem, co dokładnie każdy z nich robi. To jest ważniejsze niż format, bo bez tego przeniesiony graf byłby zbiorem nazw bez znaczenia.</li>
+      <li><strong>Powiązanie z geometrią i sceną</strong> — jak materiał przypisuje się do powierzchni, w tym integracja z USD, które przenosi scenę, ale materiału samo z siebie nie definiuje (Rozdział 3).</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: OpenPBR</div>
+    <h2>Wspólny model powierzchni</h2>
+    <p>Przenośny graf to za mało, jeśli jego wynik trafia do parametrów, które każda strona rozumie inaczej. OpenPBR jest odpowiedzią na to: jednym, dość szerokim modelem powierzchni opisuje warstwy — bazową, powłokę, cienką warstwę, emisję, rozpraszanie podpowierzchniowe — z ustalonym znaczeniem i zakresem każdego parametru.</p>
+    <p>Praktyczny zysk jest konkretny: <span class="term-violet">roughness 0,4 ma znaczyć to samo po obu stronach</span>, podobnie jak sposób łączenia warstw. To usuwa całą kategorię rozjazdów, które wcześniej trzeba było kompensować ręcznie przy każdym transferze materiału.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Czego nie gwarantuje</div>
+    <h2>Granica obietnicy</h2>
+    <p>Zgodność parametrów to nie to samo co zgodność obrazu. Nawet przy identycznym opisie materiału obraz będzie się różnił z powodów opisanych w Rozdziale 19: liczby odbić, wierności reprezentacji sceny, obecności wielokrotnego rozproszenia między mikrofasetami, sposobu próbkowania mapy środowiskowej. MaterialX i OpenPBR usuwają rozjazd w <em>opisie</em>, zostawiając rozjazd w <em>obliczeniu</em>.</p>
+    <p>Dla pipeline'u znaczy to, że standard jest warunkiem koniecznym parity (Rozdział 21) i pierwszym krokiem w kolejności czterech warstw, ale nie zastępuje sceny kontrolnej ani spisanej listy różnic. Zespół, który wdroży standard i uzna temat za zamknięty, znajdzie te same różnice co wcześniej — tylko będzie zaskoczony.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wdrażanie</div>
+    <h2>Co robić dziś</h2>
+    <p>Rozsądna kolejność, nawet jeśli pipeline nie jest gotowy na pełne wdrożenie: najpierw ujednolicić <em>zestaw parametrów</em> używanych po obu stronach do tego, co opisuje wspólny model — bez wynalazków, bez własnych mnożników, bez „u nas roughness liczy się odwrotnie”. To da większość korzyści przy zerowym koszcie narzędziowym. Dopiero potem, gdy narzędzia dojrzeją po obu stronach, przenoszenie samych grafów.</p>
   </div>
 
 <div class="site-nav">

@@ -29,9 +29,48 @@
   <h1>PDG/TOPs: graf zadań zamiast skryptu</h1>
   <p class="subtitle">Generowanie dwustu wariantów assetu bez pisania pętli — i bez ponownego liczenia stu dziewięćdziesięciu, które się nie zmieniły.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Graf zadań opisuje wytwarzanie jako sieć niezależnych zadań z jawnymi zależnościami, zamiast jako skrypt wykonywany po kolei.</li>
+      <li>Daje trzy rzeczy naraz: równoległość, przeliczanie wyłącznie tego, co się zmieniło, i powtarzalność, bo cała procedura jest zapisana.</li>
+      <li>To ta sama idea co cache adresowany treścią i graf zależności publikacji — zastosowana do wytwarzania assetów, a nie do ich wydawania.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Model</div>
+    <h2>Zadanie, zależność, atrybut</h2>
+    <p>Zamiast pętli „dla każdego z 240 wariantów zrób A, potem B, potem C”, opisuje się to jako graf: węzeł generujący 240 zestawów parametrów, węzeł wykonujący A dla każdego z nich, węzeł B zależny od A, węzeł C zależny od B. System sam rozwija to na 720 zadań i sam decyduje, które da się wykonać równolegle.</p>
+    <p>Każde zadanie niesie swoje parametry jako atrybuty, więc nie ma stanu globalnego — zadanie 137 nie zależy od tego, czy zadanie 136 już się wykonało, chyba że jest to zapisane jako zależność. Ta własność jest tym, co umożliwia równoległość, i tym, co najczęściej łamią skrypty pisane ręcznie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przeliczanie częściowe</div>
+    <h2>Skąd bierze się główna oszczędność</h2>
+    <p>Skoro zależności są jawne, po zmianie parametru da się wyznaczyć dokładnie te zadania, na które on wpływa, i przeliczyć tylko je. Reszta zostaje. To jest ta sama zasada co unieważnianie cache'u przez zmianę zawartości (Rozdział 23), tylko na poziomie kroków wytwarzania.</p>
+    <div class="worked">
+      240 wariantów × 3 kroki  =  720 zadań<br><br>
+      pełne wykonanie, 32 procesy równolegle:        ~5 min<br>
+      zmiana parametru materiału (dotyczy kroku C):<br>
+      &nbsp;&nbsp;przeliczane: 240 zadań C, zero A i B  =  ~50 s<br>
+      zmiana parametru kształtu (dotyczy A → B → C):<br>
+      &nbsp;&nbsp;przeliczane wszystko, ale tylko dla 18 wariantów,<br>
+      &nbsp;&nbsp;których dotyczy zmieniony zakres      =  ~25 s
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Typowe zastosowania w VFX</div>
+    <h2>Cztery, w kolejności opłacalności</h2>
+    <ul class="compact">
+      <li><strong>Warianty assetu.</strong> Kanoniczne zastosowanie: dwieście skał, sto skrzyń, czterdzieści wariantów muru.</li>
+      <li><strong>Przetwarzanie przy publikacji.</strong> Konwersje tekstur do formatu renderera, generowanie proxy i poziomów LOD, wypalanie map pomocniczych — wszystko to jest grafem zadań, nawet jeśli obecnie bywa skryptem.</li>
+      <li><strong>Wsad symulacji.</strong> Przeliczenie serii ustawień symulacji z automatycznym renderowaniem podglądów do porównania.</li>
+      <li><strong>Walidacja.</strong> Uruchomienie zestawu testów (Rozdział 25) na wszystkich assetach shotu jako zbioru niezależnych zadań, z raportem na końcu.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Koszt</div>
+    <h2>Kiedy to się nie opłaca</h2>
+    <p>Opisanie procesu jako grafu kosztuje więcej niż napisanie skryptu, który robi to samo raz. Próg opłacalności przebiega mniej więcej tam, gdzie proces ma być powtarzany z różnymi parametrami albo gdzie jego czas przekracza kilkanaście minut. Poniżej tego progu graf jest narzutem — i warto to powiedzieć wprost, bo entuzjazm dla tego podejścia potrafi doprowadzić do opisywania grafem operacji, która była jedną linijką.</p>
   </div>
 
 <div class="site-nav">

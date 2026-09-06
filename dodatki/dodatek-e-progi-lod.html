@@ -29,9 +29,61 @@
   <h1>Progi LOD: jak wybiera się moment przełączenia</h1>
   <p class="subtitle">Screen size, histereza i popping — mechanika decyzji, która w VFX zwykle sprowadza się do „przełącz ręcznie, jak supervisor zauważy”.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Próg przełączenia liczy się z udziału obiektu w kadrze, bo tylko ta wielkość jest niezależna od ogniskowej i rozdzielczości.</li>
+      <li>Histereza — dwa różne progi dla wchodzenia i schodzenia — likwiduje migotanie obiektu stojącego dokładnie na granicy.</li>
+      <li>W filmie przełączanie w trakcie ujęcia jest domyślnie zakazane, więc poziom wybiera się raz, dla najbliższej klatki całego ujęcia.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Rachunek progu</div>
+    <h2>Od pikseli do procentu kadru</h2>
+    <div class="worked">
+      udział w kadrze  =  wysokość obiektu na obrazie [px] / wysokość obrazu [px]<br><br>
+      wysokość na obrazie  ≈  ( wysokość obiektu × ogniskowa )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ ( odległość × wysokość matrycy ) × wysokość obrazu<br><br>
+      przykład: obiekt 2 m, ogniskowa 50 mm, matryca 24 mm, odległość 30 m<br>
+      (2 × 50) / (30 × 24)  =  0,139  →  <span style="color:#4fc3c0;">13,9% kadru</span><br><br>
+      ten sam obiekt, ogniskowa 200 mm:  55,6% kadru<br>
+      — dlatego próg oparty na metrach nie działa w filmie
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dobór progów</div>
+    <h2>Ile trójkątów na piksel wystarczy</h2>
+    <p>Sensowny próg wynika z tego, ile trójkątów przypada na piksel obrazu. Poniżej mniej więcej jednego trójkąta na piksel geometria przestaje być rozróżnialna i rasteryzacja zaczyna być marnotrawstwem; w praktyce zjeżdża się do wartości niższej, bo sylwetka potrzebuje więcej niż wnętrze bryły.</p>
+    <div class="worked">
+      obraz 2160 px wysokości, obiekt zajmuje X% kadru<br><br>
+      X = 25%  →  540 px wysokości  →  ~292 000 px powierzchni  →  LOD0<br>
+      X = 12%  →  259 px            →   ~67 000 px             →  LOD1<br>
+      X =  5%  →  108 px            →   ~11 700 px             →  LOD2<br>
+      X =  2%  →   43 px            →    ~1 900 px             →  LOD3<br><br>
+      reguła: liczba trójkątów poziomu ≈ powierzchnia w pikselach / 4
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Histereza</div>
+    <h2>Dwa progi zamiast jednego</h2>
+    <p>Obiekt stojący dokładnie na progu przy najlżejszym ruchu kamery przełącza się tam i z powrotem — co daje migotanie gorsze od samego poppingu. Rozwiązaniem jest histereza: próg zejścia na niższy poziom jest niższy niż próg powrotu na wyższy.</p>
+    <div class="worked">
+      zejście LOD0 → LOD1:  gdy udział spadnie poniżej 12%<br>
+      powrót LOD1 → LOD0:   gdy udział wzrośnie powyżej 15%<br><br>
+      martwa strefa 12–15% — w niej poziom się nie zmienia
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wariant filmowy</div>
+    <h2>Jeden poziom na ujęcie</h2>
+    <p>Ponieważ przełączenie w środku ujęcia jest w filmie niedopuszczalne (Rozdział 10), histereza staje się niepotrzebna, a algorytm upraszcza się do jednego przebiegu offline:</p>
+    <ol>
+      <li>dla każdej klatki ujęcia policz udział obiektu w kadrze,</li>
+      <li>weź maksimum z całego ujęcia,</li>
+      <li>dobierz poziom z tabeli progów dla tej wartości,</li>
+      <li>zapisz przydział w opisie shotu, żeby był powtarzalny i podlegał przeglądowi.</li>
+    </ol>
+    <p>Punkt czwarty jest tym, co odróżnia to od ręcznego wyboru proxy: przydział jest danymi, więc da się go zaraportować („140 assetów zeszło o dwa poziomy, oszczędność 60% geometrii”) i cofnąć, gdy supervisor zauważy problem.</p>
   </div>
 
 <div class="site-nav">

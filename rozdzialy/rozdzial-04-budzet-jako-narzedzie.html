@@ -28,9 +28,91 @@
   <h1>Budżet jako narzędzie projektowe</h1>
   <p class="subtitle">W grze budżet tekstur i trójkątów jest twardą liczbą, którą widać codziennie. W VFX też istnieje — tylko nikt go nie mierzy, dopóki nie wybuchnie farma.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Budżet to liczba uzgodniona <em>zanim</em> powstanie asset: ile megabajtów tekstur, ile trójkątów, ile materiałów wolno mu zająć. W grze jest oczywistością, w VFX prawie nie istnieje.</li>
+      <li>W VFX też da się go policzyć, i to bez zgadywania: sufit pamięci węzła renderującego podzielony przez liczbę assetów widocznych w typowym shocie daje pierwsze przybliżenie w kilka minut.</li>
+      <li>Wartość budżetu nie leży w pilnowaniu — leży w tym, że wymusza rozmowę o hierarchii ważności na początku, a nie na tydzień przed oddaniem.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Gdyby z tej książki miało zostać jedno zdanie, brzmiałoby ono: <strong>policz, ile ten asset ma prawo kosztować, zanim go zrobisz</strong>. Wszystkie pozostałe techniki są narzędziami do zmieszczenia się w tej liczbie. Bez niej trim sheet jest ciekawostką, LOD-y są robotą dla porządku, a instancing jest optymalizacją, której nikt nie umie uzasadnić.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Czym budżet jest</div>
+    <h2>Kontrakt, nie ograniczenie</h2>
+    <p>Budżet w gamedevie to zestaw liczb przypisanych klasie assetu, uzgodnionych przez art directora i lead technical artistę na starcie produkcji: rekwizyt drugoplanowy dostaje jedną teksturę 1K i dwa tysiące trójkątów, bohater dostaje cztery mapy 4K i sto tysięcy. Te liczby nie są arbitralne — wynikają z twardego sufitu pamięci konsoli i z tego, ile obiektów widać naraz.</p>
+    <p>Kluczowe jest to, czym budżet <em>nie</em> jest. Nie jest policją — jest kontraktem, który ma jawną furtkę: asset wolno przekroczyć, jeśli ktoś podejmie tę decyzję świadomie i zapisze ją. Budżet bez furtki produkuje albo obchodzenie go po cichu, albo assety gorsze, niż powinny być. Budżet z furtką produkuje rozmowę: „ta skrzynia ma trzy razy więcej, niż przewidziano — czy ona na pewno jest bohaterem tego shotu?”.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Skąd wziąć liczbę w VFX</div>
+    <h2>Rachunek z sufitu pamięci</h2>
+    <p>W VFX nikt nie dostaje budżetu od producenta konsoli, więc trzeba go wyprowadzić z tego, co realnie ogranicza. Najtwardszym limitem jest pamięć węzła renderującego: render, który się w niej nie mieści, nie zwalnia — pada albo wchodzi na dysk, co jest tą samą klęską rozłożoną w czasie.</p>
+    <div class="worked">
+      pamięć węzła farmy                       128 GB<br>
+      minus system, sceny, cache geometrii      ~48 GB<br>
+      zostaje na tekstury                        80 GB<br><br>
+      typowy shot środowiskowy: ~180 widocznych assetów<br>
+      80 GB / 180  =  <span style="color:#4fc3c0;">~450 MB na asset</span>, średnio<br><br>
+      przy mapach half-float 4 kanały: 1 mapa 2K ≈ 33,5 MB<br>
+      450 MB  ≈  13 map 2K  albo  3 mapy 4K  na asset
+    </div>
+    <p>To przybliżenie zgrubne — cache tekstur renderera nigdy nie trzyma wszystkiego naraz w pełnej rozdzielczości, więc realny szczyt będzie niższy, a shot z jednym bohaterem i tłem rozkłada się zupełnie inaczej niż ten rachunek zakłada. Ale liczba istnieje, jest wyprowadzona z czegoś prawdziwego i można się o nią spierać — a to już nieskończenie więcej niż „to chyba za ciężkie”. Dodatek D rozkłada ten rachunek dokładniej, razem z tym, co robić, gdy shot ma jednego bohatera i dwieście tysięcy źdźbeł trawy.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Podział, nie sufit</div>
+    <h2>Budżet dzieli się nierówno i o to chodzi</h2>
+    <p>Średnia z rachunku wyżej jest tylko punktem wyjścia — prawdziwy budżet rozdziela się według tego, na co patrzy kamera. Podział, który sprawdza się w obu branżach, wygląda mniej więcej tak:</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Budget.split</span><span>80 GB shotu, rozdzielone</span></div>
+      <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="40" width="270" height="44" rx="5" fill="#20242c" stroke="#e8a33d" stroke-width="1.5"/>
+        <rect x="290" y="40" width="200" height="44" rx="5" fill="#20242c" stroke="#4fc3c0" stroke-width="1.5"/>
+        <rect x="490" y="40" width="190" height="44" rx="5" fill="#20242c" stroke="#9c82d8" stroke-width="1.5"/>
+        <g font-family="IBM Plex Sans" font-size="11.5" fill="#ecebe4" text-anchor="middle">
+          <text x="155" y="60">bohaterowie kadru</text>
+          <text x="390" y="60">plan średni</text>
+          <text x="585" y="60">tło i wypełnienie</text>
+        </g>
+        <g font-family="IBM Plex Mono" font-size="10" fill="#8b909b" text-anchor="middle">
+          <text x="155" y="76">3–5 assetów · ~45% pamięci</text>
+          <text x="390" y="76">~30 assetów · ~35%</text>
+          <text x="585" y="76">~150 assetów · ~20%</text>
+        </g>
+        <text x="350" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#8b909b">pięć assetów zjada prawie połowę — i słusznie, bo to na nie patrzy widz</text>
+        <text x="350" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#e8a33d">tło mieści się w swoich 20% tylko dzięki wspólnym arkuszom (R.5) i instancingowi (R.12)</text>
+      </svg>
+      <div class="diagram-caption">Budżet nie jest równy — jest proporcjonalny do uwagi widza.</div>
+    </div>
+    <p>Ten podział jest jednocześnie odpowiedzią na najczęstszy zarzut wobec przenoszenia dyscypliny z gier: „u nas nie ma budżetów, bo hero asset musi wyglądać”. Musi — i dostaje na to niemal połowę wszystkiego. Reszta pipeline'u istnieje po to, żeby miał z czego dostać.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co się zmienia</div>
+    <h2>Trzy skutki uboczne istnienia liczby</h2>
+    <ul class="compact">
+      <li><strong>Decyzje przesuwają się na początek.</strong> Pytanie „czy ta ściana jest bohaterem?” zadane przed modelowaniem kosztuje pięć minut. Zadane po dwóch tygodniach lookdevu kosztuje dwa tygodnie.</li>
+      <li><strong>Kłótnia zmienia charakter.</strong> Bez liczby spór o ciężkość sceny jest sporem o gust między osobami o różnym stażu. Z liczbą jest sporem o to, czy 450 MB to właściwy przydział — czyli o coś, co da się rozstrzygnąć.</li>
+      <li><strong>Widać, kto płaci.</strong> Bez budżetu koszt rozlewa się na wszystkich: na farmę, na dział lightingu, na osobę, która o 23:00 restartuje render. Z budżetem koszt ma właściciela już w momencie powstania.</li>
+    </ul>
+    <p>I ostrzeżenie, bo bez niego ten rozdział byłby propagandą: budżet egzekwowany bez wyjątków w produkcji filmowej robi realną szkodę. Shot, w którym kamera nieoczekiwanie najeżdża na rekwizyt drugoplanowy, wymaga złamania budżetu — i to nie jest porażka systemu, tylko jego poprawne użycie. System ma zapewnić, że złamanie jest widoczne i policzone, a nie że nigdy nie nastąpi.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Budżet assetu</dt>
+      <dd>Uzgodniona z góry liczba: pamięć tekstur, liczba trójkątów, liczba materiałów przypadająca na klasę assetu.</dd>
+      <dt>Sufit pamięci węzła</dt>
+      <dd>Twardy limit RAM maszyny renderującej; najbardziej wiarygodny punkt wyjścia do wyprowadzenia budżetu w VFX.</dd>
+      <dt>Furtka (hero exception)</dt>
+      <dd>Jawna, zapisana zgoda na przekroczenie budżetu dla konkretnego assetu. Budżet bez niej jest obchodzony po cichu.</dd>
+      <dt>Przydział proporcjonalny</dt>
+      <dd>Rozdzielenie budżetu według uwagi widza, nie po równo — kilka assetów bierze prawie połowę.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Budżet mówi, ile pamięci wolno zająć. Nie mówi jeszcze, jak ją rozłożyć na powierzchni — a to jest pytanie o jedną konkretną liczbę, którą gamedev zna na pamięć, a VFX zwykle nie zna wcale. Następny rozdział jest o texel density i o tym, jak pogodzić wspólny arkusz z UDIM-ami bohatera.</p>
   </div>
 
 <div class="site-nav chapter-nav">

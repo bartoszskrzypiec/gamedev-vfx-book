@@ -28,9 +28,60 @@
   <h1>Higiena assetu: nazwy, pivoty, skala, UV</h1>
   <p class="subtitle">Nudna warstwa, której gamedev pilnuje obsesyjnie, bo inaczej gra się nie zbuduje — a która w VFX kosztuje dokładnie tyle samo, tylko później.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Higiena assetu to zestaw nudnych własności — nazwa, skala, pivot, orientacja, czyste UV, brak śmieci w scenie — których gamedev pilnuje, bo bez nich gra się nie zbuduje.</li>
+      <li>W VFX nic nie wymusza ich automatycznie, więc koszt nie znika: przenosi się na osobę, która trzy tygodnie później zastanawia się, czemu instancje obracają się wokół niewłaściwego punktu.</li>
+      <li>To warunek wstępny wszystkiego, co da się zautomatyzować — walidacji, proceduralnego rozrzucania, wymiany assetu na nowszą wersję.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Ten rozdział nie zawiera żadnej efektownej techniki. Zawiera listę rzeczy, które trzeba ustalić raz i potem sprawdzać maszynowo — i jest tu, bo bez niej cztery poprzednie rozdziały pozostają dobrymi chęciami. Trim sheet nie pomoże, jeśli nikt nie wie, który plik jest aktualny. Modularność nie zadziała, jeśli pivoty modułów są w losowych miejscach.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Nazwa</div>
+    <h2>Metadane, które da się przeczytać bez otwierania pliku</h2>
+    <p>Konwencja nazewnicza w gamedevie ma jedną funkcję: nazwa pliku ma odpowiadać na pytania, zanim ktokolwiek go otworzy. Typowy wzorzec to <code>typ_nazwa_wariant_LOD</code> — <code>SM_wall_concrete_A_LOD0</code>. Prefiks mówi, czym obiekt jest; korpus, co przedstawia; sufiks, którym wariantem i poziomem szczegółowości.</p>
+    <p>W VFX rolę tę częściowo pełni struktura katalogów publikacji, i to jest dobre rozwiązanie — ale tylko dopóki asset zostaje w pipelinie. W momencie, gdy plik trafia do silnika, do biblioteki albo do zewnętrznego podwykonawcy, kontekst katalogu znika, a nazwa zostaje. Reguła praktyczna: <strong>nazwa musi wystarczyć, gdy plik leży sam na pulpicie</strong>.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Skala, pivot, orientacja</div>
+    <h2>Trzy liczby, które psują automatyzację</h2>
+    <ul class="compact">
+      <li><strong>Skala 1,0 i wypalone transformacje.</strong> Obiekt zapisany ze skalą 0,01, żeby „wyglądał dobrze”, przenosi ten błąd do każdej instancji, symulacji i eksportu. Skala musi być wypalona w geometrię, nie trzymana w transformacji obiektu.</li>
+      <li><strong>Pivot w punkcie, wokół którego rzecz się obraca.</strong> Dla drzwi to zawias, dla ściany modularnej róg na siatce, dla rekwizytu punkt kontaktu z podłożem. Pivot w środku bryły jest wygodny w viewporcie i bezużyteczny wszędzie indziej.</li>
+      <li><strong>Uzgodniony kierunek „przodu”.</strong> Zestaw modułów, w którym połowa patrzy w +X, a połowa w −Z, wymaga ręcznego obracania przy każdym użyciu — czyli dokładnie tego, co modularność miała wyeliminować.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Czystość geometrii i UV</div>
+    <h2>Co sprawdza się maszynowo</h2>
+    <p>Lista rzeczy, które w gamedevie wyłapuje importer, a w VFX zwykle nikt: zdublowane wierzchołki, odwrócone normalne, n-gony w miejscach, które będą się deformować, zerowej powierzchni trójkąty, nieużywane materiały, historia konstrukcji zostawiona w pliku, kilka obiektów w jednej siatce bez powodu, nakładające się wysepki UV tam, gdzie nakładać się nie miały, brak drugiego kanału UV, jeśli pipeline go oczekuje.</p>
+    <p>Żadna z tych rzeczy nie jest katastrofą osobno. Razem tworzą asset, którego nie da się bezpiecznie przetworzyć automatycznie — a to znaczy, że każda operacja na nim wymaga człowieka. Rozdział 25 pokazuje, jak zamienić tę listę na test uruchamiany przy publikacji; Dodatek N zawiera ją w formie gotowej do wpięcia.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dlaczego to się przenosi</div>
+    <h2>Koszt nie znika, tylko się przesuwa</h2>
+    <p>Argument przeciw brzmi zwykle: „w filmie asset żyje krótko, nie opłaca się nad nim tak pracować”. Bywa to prawdą dla rekwizytu z jednego shotu i nieprawdą dla wszystkiego, co przechodzi przez ręce więcej niż jednej osoby. Asset bez higieny nie jest tańszy — jest tańszy <em>dla tego, kto go zrobił</em>, a droższy dla wszystkich następnych: dla działu FX, który musi go naprawić przed symulacją, dla lightingu, który dziwi się cieniom od odwróconych normalnych, i dla osoby, która za rok próbuje go użyć ponownie.</p>
+    <p>To jest dokładnie ten typ techniki, który filtr z Rozdziału 2 przepuszcza bez wahania: oszczędza dane i pracę, koszt płaci się raz przy publikacji, a kamera nie ma z tym nic wspólnego.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Wypalona transformacja</dt>
+      <dd>Skala, obrót i przesunięcie zapisane w samej geometrii, a nie w transformacji obiektu.</dd>
+      <dt>Pivot</dt>
+      <dd>Punkt odniesienia obiektu — środek obrotu i punkt wstawienia instancji.</dd>
+      <dt>N-gon</dt>
+      <dd>Wielokąt o więcej niż czterech bokach; problematyczny wszędzie tam, gdzie siatka będzie się deformować lub subdivować.</dd>
+      <dt>Drugi kanał UV</dt>
+      <dd>Osobny układ UV, zwykle nienachodzący, używany do wypalania danych przestrzennych niezależnie od głównych UV.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Część o assetach domknięta: budżet, gęstość, arkusze, moduły, warstwy i higiena. Następna część zajmuje się tym samym pytaniem od strony geometrii — jak mieć w kadrze więcej rzeczy, niż mieści się w pamięci, zaczynając od techniki, którą VFX zna pod inną nazwą i stosuje mniej systematycznie: od LOD-ów.</p>
   </div>
 
 <div class="site-nav chapter-nav">

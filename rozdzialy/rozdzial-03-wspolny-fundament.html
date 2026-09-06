@@ -28,9 +28,90 @@
   <h1>Wspólny fundament: PBR, USD i te same DCC</h1>
   <p class="subtitle">Obie branże od dawna stoją na tych samych filarach — i właśnie dlatego przenoszenie workflow jest w ogóle wykonalne, a nie tylko efektowne w prezentacji.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Obie branże liczą materiał tym samym modelem mikrofasetowym, opisują scenę tym samym USD, zarządzają kolorem tym samym OCIO i używają dosłownie tych samych narzędzi do tekstur i rzeźby.</li>
+      <li>Ten wspólny fundament jest powodem, dla którego przenoszenie workflow jest inżynierią, a nie tłumaczeniem — asset nie musi zmieniać tożsamości, żeby przejść na drugą stronę.</li>
+      <li>Różnice, które zostają, są konkretne i policzalne: przybliżenia w obliczeniach oświetlenia, format i precyzja tekstur, konwencja skali oraz to, co każda ze stron rozumie przez słowo „finalny”.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Gdyby gamedev i VFX stały na różnych fundamentach, ta książka byłaby zbiorem analogii. Nie jest — bo przez ostatnie piętnaście lat obie branże zbiegły się na tych samych czterech filarach, i to nie przez modę, tylko dlatego, że każdy z nich rozwiązywał problem, który obie miały. Warto je wymienić po kolei, bo każdy z nich niesie inną obietnicę tego, co da się przenieść.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Filar pierwszy</div>
+    <h2>Ten sam model materiału</h2>
+    <p>Obie strony opisują powierzchnię modelem <span class="term-violet">mikrofasetowym</span>: rozkładem statystycznym mikroskopijnych lusterek, z którego wynika, jak szeroko rozprasza się odbicie. Parametr sterujący nazywa się <em>roughness</em> po obu stronach i znaczy to samo. Obie strony wymuszają zachowanie energii — powierzchnia nie odbija więcej światła, niż dostała. Obie rozróżniają przewodniki od dielektryków, jedne przez przełącznik <em>metalness</em>, drugie przez osobny parametr, ale opisując tę samą fizykę.</p>
+    <p>Konsekwencja praktyczna jest mocniejsza, niż się zwykle mówi: <strong>tekstura roughness zrobiona pod grę jest poprawną teksturą roughness w path tracerze</strong>. Nie wymaga konwersji, tylko sprawdzenia przestrzeni kolorów i zakresu. To dlatego cała część o autoringu assetów w tej książce ma w ogóle sens — mapy przenoszą się jeden do jednego, a spór dotyczy tylko tego, ile ich potrzeba i w jakiej rozdzielczości.</p>
+    <p>Różnice zaczynają się dopiero w obliczeniach. Silnik gry liczy oświetlenie z mapy środowiskowej metodą rozdzielonej sumy — przybliżeniem, które jest dokładne dla powierzchni gładkich i coraz bardziej rozjeżdża się dla bardzo szorstkich. Path tracer liczy to samo próbkowaniem i dokłada wielokrotne rozproszenie między mikrofasetami, którego przybliżenie z gry po prostu nie ma, przez co bardzo szorstki metal w silniku bywa ciemniejszy niż w renderze. To jest realna, widoczna różnica — i pierwszy podejrzany, gdy podgląd nie zgadza się z finałem (Rozdział 21).</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Filar drugi</div>
+    <h2>Ten sam opis sceny</h2>
+    <p>USD jest dziś czytane po obu stronach: przez rendery offline, przez Houdiniego i Katanę, przez Unreala i Omniverse. To zmienia charakter transferu z eksportu na <span class="term-violet">współdzielenie</span> — ten sam plik może być źródłem dla podglądu w silniku i dla finalnego renderu, zamiast dwóch kopii, które rozjeżdżają się po tygodniu.</p>
+    <p>Warto jednak wiedzieć, gdzie ta wspólnota się kończy. USD gwarantuje, że obie strony zobaczą tę samą hierarchię, te same transformacje i te same referencje. Nie gwarantuje, że zobaczą ten sam materiał, bo materiał w USD jest siecią shaderów, a nie liczbą — i dopiero MaterialX (Dodatek L) próbuje domknąć tę lukę. W praktyce USD przenosi <em>scenę</em>, a materiał przenosi się osobną, słabiej zabezpieczoną ścieżką.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Filar trzeci</div>
+    <h2>Ten sam kolor</h2>
+    <p>OCIO i ACES nie są już domeną wyłącznie filmu. Silniki gier mają zarządzanie kolorem, przestrzenie robocze i transformacje wyświetlania, a produkcje mieszane (Rozdział 22) wymuszają, żeby te ustawienia zgadzały się co do znaku. Praktyczna zasada jest krótka i niewdzięczna: <strong>mapa koloru bazowego jest w sRGB, wszystkie pozostałe są danymi liniowymi</strong>. Roughness, metalness, mapa wysokości i mapa normalnych opisują liczby, nie barwy — potraktowanie ich jak obrazu sRGB to najczęstszy pojedynczy błąd przy przenoszeniu assetu między stronami i, co gorsza, taki, który wygląda „prawie dobrze”.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Filar czwarty</div>
+    <h2>Dosłownie te same narzędzia</h2>
+    <p>Substance Painter i Designer, ZBrush, Houdini, Blender, Maya, Marmoset — to nie są narzędzia „podobne do siebie” po obu stronach, to te same programy w tych samych wersjach. Artysta środowisk z gier i artysta assetów z VFX pracują w identycznym oprogramowaniu, na tych samych plikach, z tymi samymi skrótami klawiszowymi, a rozjeżdżają się dopiero w miejscu, w którym gotowy asset trafia dalej.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Stack.shared</span><span>Co jest wspólne, a co własne</span></div>
+      <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+        <g font-family="IBM Plex Sans" font-size="11.5" fill="#ecebe4" text-anchor="middle">
+          <rect x="150" y="16" width="180" height="40" rx="7" fill="#20242c" stroke="#e8a33d" stroke-width="1.4"/>
+          <text x="240" y="41">silnik gry · klatka</text>
+          <rect x="370" y="16" width="180" height="40" rx="7" fill="#20242c" stroke="#4fc3c0" stroke-width="1.4"/>
+          <text x="460" y="41">path tracer · klatka</text>
+
+          <rect x="150" y="66" width="180" height="36" rx="6" fill="#1b1e24" stroke="#e8a33d" stroke-opacity="0.6"/>
+          <text x="240" y="89" font-size="10.5" fill="#8b909b">przybliżenia GI, TAA, LOD</text>
+          <rect x="370" y="66" width="180" height="36" rx="6" fill="#1b1e24" stroke="#4fc3c0" stroke-opacity="0.6"/>
+          <text x="460" y="89" font-size="10.5" fill="#8b909b">próbkowanie, subdiv, deep</text>
+        </g>
+        <g font-family="IBM Plex Sans" font-size="12" fill="#ecebe4" text-anchor="middle">
+          <rect x="60" y="118" width="580" height="34" rx="6" fill="#20242c" stroke="#9c82d8" stroke-width="1.4"/>
+          <text x="350" y="140">model materiału: mikrofasety, roughness, zachowanie energii</text>
+          <rect x="60" y="156" width="580" height="34" rx="6" fill="#20242c" stroke="#9c82d8" stroke-width="1.4"/>
+          <text x="350" y="178">opis sceny: USD — hierarchia, transformacje, referencje</text>
+          <rect x="60" y="194" width="580" height="34" rx="6" fill="#20242c" stroke="#9c82d8" stroke-width="1.4"/>
+          <text x="350" y="216">kolor: OCIO/ACES · narzędzia: Substance, ZBrush, Houdini</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">Fioletowe warstwy są wspólne. Rozjazd zaczyna się dopiero tam, gdzie każda strona liczy klatkę po swojemu.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Czego wspólnego nie ma</div>
+    <h2>Trzy rzeczy, które trzeba uzgodnić ręcznie</h2>
+    <ul class="compact">
+      <li><strong>Skala i jednostki.</strong> Gra zwykle pracuje w centymetrach, VFX w metrach albo w jednostkach uzgodnionych z działem previz. Asset o skali 100 razy za dużej wygląda poprawnie do momentu, w którym dotknie go symulacja albo głębia ostrości. To jedno z pierwszych sprawdzeń w walidatorze (Dodatek N).</li>
+      <li><strong>Format i precyzja tekstur.</strong> Gra chce kompresji blokowej na GPU, render chce kafelkowanego pliku o wysokiej precyzji. Ten sam obraz źródłowy, dwa różne pliki wyjściowe — i tylko jeden z nich wolno traktować jako źródło prawdy (Rozdział 15).</li>
+      <li><strong>Znaczenie słowa „finalny”.</strong> W grze asset jest gotowy, gdy mieści się w budżecie i przechodzi walidację. W VFX jest gotowy, gdy supervisor go zatwierdzi — a to może się zmienić po zmianie ujęcia. Ta jedna różnica tłumaczy większość tarć, gdy zespoły z obu branż pracują razem.</li>
+    </ul>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Model mikrofasetowy</dt>
+      <dd>Opis powierzchni jako statystycznego rozkładu mikroskopijnych lusterek; wspólna podstawa shadingu w grach i w renderze offline.</dd>
+      <dt>Zachowanie energii</dt>
+      <dd>Zasada, że powierzchnia nie odbija więcej światła, niż otrzymała. Egzekwowana po obu stronach, choć różnymi przybliżeniami.</dd>
+      <dt>Rozdzielona suma (split-sum)</dt>
+      <dd>Przybliżenie oświetlenia z mapy środowiskowej stosowane w grach; rozjeżdża się z referencją dla bardzo szorstkich powierzchni.</dd>
+      <dt>Dane liniowe</dt>
+      <dd>Tekstura niosąca liczby, nie barwy (roughness, normalne, wysokość) — nigdy nie interpretowana jako sRGB.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Fundament jest wspólny, narzędzia te same, a mimo to nawyki różne. Różnicę robi jedna rzecz, której VFX prawie nigdy nie ma spisanej: liczba, która mówi, ile asset ma prawo kosztować. Następny rozdział jest o tym, jak taką liczbę ustalić i co się zmienia, gdy zaczyna istnieć.</p>
   </div>
 
 <div class="site-nav chapter-nav">

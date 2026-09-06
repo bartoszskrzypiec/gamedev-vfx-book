@@ -28,9 +28,98 @@
   <h1>Atlasy, UDIM-y i texel density</h1>
   <p class="subtitle">Ile pikseli na centymetr ma Twój asset? W gamedevie to pytanie z odpowiedzią w liczbie, w VFX zwykle wzruszenie ramion — a to dokładnie ta sama wielkość.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Texel density to liczba pikseli tekstury przypadająca na centymetr powierzchni w świecie. Jedna liczba, którą da się policzyć w trzydzieści sekund i która rozstrzyga większość sporów o rozdzielczość.</li>
+      <li>Ważniejsza od jej wysokości jest jej <em>spójność</em>: dwa sąsiadujące obiekty o różnej gęstości wyglądają źle nawet wtedy, gdy oba są w wysokiej rozdzielczości.</li>
+      <li>Atlas i UDIM to nie konkurenci, tylko dwie odpowiedzi na różne pytania: atlas upycha wiele obiektów w jedną teksturę, UDIM rozkłada jeden obiekt na wiele kafli. Jeden asset może używać obu.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>„Czy ta tekstura jest wystarczająco duża?” jest złym pytaniem, bo nie da się na nie odpowiedzieć bez podania, jak dużą powierzchnię ma pokryć. Dobre pytanie brzmi: <em>ile pikseli przypada tu na centymetr?</em> — i ma odpowiedź liczbową, niezależną od rozmiaru obiektu, więc porównywalną między assetami, między działami i między branżami.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Definicja i rachunek</div>
+    <h2>Piksele na centymetr</h2>
+    <p><span class="term-violet">Texel density</span> to stosunek liczby pikseli tekstury do rozmiaru powierzchni, którą pokrywają. Rachunek wymaga dwóch rzeczy: rozdzielczości mapy i informacji, jaką część przestrzeni UV zajmuje dana wysepka.</p>
+    <div class="worked">
+      ściana 4 m × 3 m, wysepka UV zajmuje 1/4 tekstury 2048 × 2048<br><br>
+      piksele przypadające na wysepkę:  2048 × 0,5  =  1024 px w poziomie<br>
+      szerokość w świecie:               400 cm<br><br>
+      texel density  =  1024 px / 400 cm  =  <span style="color:#4fc3c0;">2,56 px/cm</span><br><br>
+      dla porównania — ta sama ściana na całej teksturze 2048:<br>
+      2048 / 400  =  5,12 px/cm
+    </div>
+    <p>Wartości spotykane w praktyce układają się mniej więcej tak: <span class="term-amber">2,56 px/cm</span> to duże, odległe powierzchnie w grach (256 pikseli na metr), <span class="term-amber">5,12 px/cm</span> to standard środowiskowy, <span class="term-amber">10,24 px/cm</span> to obiekty, do których gracz może podejść. Po stronie VFX bohater oglądany w zbliżeniu potrafi potrzebować 40 px/cm i więcej — ale, co ważniejsze, tło w tym samym kadrze nie potrzebuje ich wcale.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dlaczego to działa</div>
+    <h2>Spójność bije rozdzielczość</h2>
+    <p>Najczęstsze nieporozumienie brzmi: „skoro wyższa gęstość jest lepsza, dajmy wszystkiemu maksymalną”. To nieprawda z dwóch powodów. Pierwszy jest budżetowy i oczywisty (Rozdział 4). Drugi jest percepcyjny i mniej oczywisty: <strong>oko wyłapuje różnicę gęstości znacznie łatwiej niż niską gęstość samą w sobie</strong>. Ściana o 5 px/cm wygląda dobrze obok innej ściany o 5 px/cm, a źle obok listwy o 20 px/cm — bo w miejscu ich styku widać nagłą zmianę ostrości, której w rzeczywistości nie ma.</p>
+    <p>Stąd praktyka gamedevu, którą warto przenieść dosłownie: ustala się jedną gęstość bazową dla całego środowiska i odstępuje od niej tylko świadomie, dla bohaterów, z wyraźnym przejściem — a nie przypadkowo, obiekt po obiekcie. To także powód, dla którego trim sheet z Rozdziału 5 działa: wszystko, co go używa, ma z definicji tę samą gęstość, więc spójność jest za darmo.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Atlas kontra UDIM</div>
+    <h2>Dwie odpowiedzi na dwa różne pytania</h2>
+    <p>Oba mechanizmy rozkładają powierzchnię na więcej niż jedną teksturę, ale odpowiadają na przeciwne potrzeby.</p>
+    <ul class="compact">
+      <li><strong>Atlas</strong> pakuje <em>wiele obiektów</em> w jedną teksturę. Motywacja: jeden materiał, jedno wczytanie, mniej narzutu. Cena: rozdzielczość dzieli się między obiekty, a dołożenie nowego elementu wymaga przepakowania atlasu i poprawienia UV wszystkiego, co w nim było.</li>
+      <li><strong>UDIM</strong> rozkłada <em>jeden obiekt</em> na siatkę kafli, z których każdy jest osobnym plikiem o pełnej rozdzielczości. Motywacja: bohater potrzebuje więcej pikseli, niż mieści jedna tekstura. Cena: liczba plików rośnie, a render musi je wszystkie znaleźć i zmieścić w cache'u.</li>
+    </ul>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>UV.space</span><span>Ten sam problem, dwa kierunki</span></div>
+      <svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+        <text x="30" y="24" font-family="IBM Plex Mono" font-size="10.5" fill="#e8a33d">ATLAS · wiele obiektów → jedna tekstura</text>
+        <rect x="30" y="34" width="160" height="160" fill="#20242c" stroke="#e8a33d" stroke-width="1.4"/>
+        <g stroke="#e8a33d" stroke-opacity="0.55" fill="#262b34">
+          <rect x="38" y="42" width="70" height="70"/><rect x="114" y="42" width="68" height="44"/>
+          <rect x="114" y="92" width="30" height="30"/><rect x="150" y="92" width="32" height="30"/>
+          <rect x="38" y="118" width="46" height="68"/><rect x="90" y="118" width="92" height="34"/>
+          <rect x="90" y="158" width="44" height="28"/><rect x="140" y="158" width="42" height="28"/>
+        </g>
+        <text x="110" y="212" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">8 obiektów dzieli 2048²</text>
+
+        <text x="380" y="24" font-family="IBM Plex Mono" font-size="10.5" fill="#4fc3c0">UDIM · jeden obiekt → wiele kafli</text>
+        <g stroke="#4fc3c0" stroke-width="1.4" fill="#20242c">
+          <rect x="380" y="34" width="78" height="78"/><rect x="462" y="34" width="78" height="78"/><rect x="544" y="34" width="78" height="78"/>
+          <rect x="380" y="116" width="78" height="78"/><rect x="462" y="116" width="78" height="78"/><rect x="544" y="116" width="78" height="78"/>
+        </g>
+        <g font-family="IBM Plex Mono" font-size="9.5" fill="#8b909b" text-anchor="middle">
+          <text x="419" y="78">1001</text><text x="501" y="78">1002</text><text x="583" y="78">1003</text>
+          <text x="419" y="160">1011</text><text x="501" y="160">1012</text><text x="583" y="160">1013</text>
+        </g>
+        <text x="501" y="212" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">1 obiekt, 6 × 2048² pełnej rozdzielczości</text>
+      </svg>
+      <div class="diagram-caption">Atlas oszczędza pamięć kosztem rozdzielczości. UDIM kupuje rozdzielczość kosztem pamięci.</div>
+    </div>
+    <p>Ponieważ odpowiadają na różne pytania, na jednym assecie mogą współistnieć bez konfliktu — i tak właśnie wygląda praktyka, którą warto przenieść: <strong>trim sheet albo atlas na 80% powierzchni, UDIM-y na tych 20%, na które patrzy kamera</strong>. Renderer nie ma z tym problemu, bo to po prostu dwa materiały na jednym obiekcie. Problem bywa organizacyjny — ktoś musi zdecydować, gdzie przebiega granica, i zrobić to przed rozłożeniem UV, nie po. Dodatek C rozkłada tę decyzję na przypadki.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Higiena</div>
+    <h2>Trzy rzeczy, które psują gęstość po cichu</h2>
+    <ul class="compact">
+      <li><strong>Skalowanie obiektu po rozłożeniu UV.</strong> Powiększenie modelu dwukrotnie halvuje jego gęstość, a nic w interfejsie o tym nie powie. To najczęstsza przyczyna „dlaczego ta ściana jest rozmyta”.</li>
+      <li><strong>Za mały margines (padding).</strong> Przy niższych poziomach mipmap sąsiednie wysepki zaczynają się w siebie rozlewać. Reguła: margines rośnie razem z rozdzielczością, nie jest stały w pikselach dla wszystkich map.</li>
+      <li><strong>Lustrzane odbicie UV bez świadomości.</strong> Oszczędza połowę tekstury i jest w gamedevie normą, ale mapa normalnych po odbiciu wymaga uwagi, a każdy niesymetryczny detal — napis, plama — zdradza sztuczkę natychmiast.</li>
+    </ul>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Texel density</dt>
+      <dd>Liczba pikseli tekstury na jednostkę powierzchni w świecie, zwykle px/cm. Niezależna od rozmiaru obiektu, więc porównywalna.</dd>
+      <dt>Atlas</dt>
+      <dd>Jedna tekstura zawierająca wiele obiektów. Oszczędza pamięć i liczbę materiałów kosztem rozdzielczości na obiekt.</dd>
+      <dt>UDIM</dt>
+      <dd>Siatka kafli tekstur numerowanych od 1001, pokrywających jeden obiekt. Kupuje rozdzielczość kosztem liczby plików.</dd>
+      <dt>Margines (padding)</dt>
+      <dd>Bufor pikseli wokół wysepki UV, chroniący przed rozlewaniem się sąsiadów na niższych poziomach mipmap.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Mamy budżet i mamy gęstość — dwie liczby opisujące jeden asset. Następny rozdział zajmuje się tym, co się dzieje, gdy assetów jest pięćset: jak zbudować set z powtarzalnych klocków tak, żeby nie wyglądał na zbudowany z powtarzalnych klocków.</p>
   </div>
 
 <div class="site-nav chapter-nav">

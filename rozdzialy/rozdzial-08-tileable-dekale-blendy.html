@@ -28,9 +28,91 @@
   <h1>Tileable, dekale i blendy: autoring warstwowy</h1>
   <p class="subtitle">Zamiast jednej wielkiej unikalnej mapy — baza kafelkowa, dekale na to, co wyróżnia, i blend tam, gdzie jedno przechodzi w drugie.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Autoring warstwowy rozdziela materiał na trzy role: kafelkowa baza mówi, z czego to jest; dekale mówią, co temu obiektowi się przydarzyło; blendy mówią, gdzie jedno przechodzi w drugie.</li>
+      <li>To najtańszy znany sposób na unikalność: charakter dokłada się tam, gdzie patrzy kamera, bez podnoszenia rozdzielczości całej powierzchni.</li>
+      <li>W VFX dekal ma dodatkową zaletę, której gra nie wykorzystuje: jest osobną warstwą, więc supervisor może kazać go przesunąć albo usunąć bez ruszania materiału bazowego.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Klasyczny asset VFX ma jedną unikalną teksturę zawierającą wszystko naraz: materiał, zabrudzenia, zacieki, uszkodzenia i przejście w rdzę. Jest to wygodne przy malowaniu i kosztowne przy wszystkim innym — bo każda poprawka wymaga wrócenia do tego jednego pliku, a każda decyzja jest w nim zapieczona na stałe. Autoring warstwowy rozbija tę monolityczną mapę na trzy niezależne role.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Warstwa pierwsza</div>
+    <h2>Baza kafelkowa: z czego to jest</h2>
+    <p>Materiał <span class="term-amber">kafelkowy</span> (tileable) opisuje samą substancję — beton, malowany metal, deskę, tynk — i nic poza tym. Powtarza się w obu kierunkach bez szwu, więc pokrywa dowolnie dużą powierzchnię przy stałej gęstości pikseli i stałym koszcie pamięci. Zwykle powstaje proceduralnie, więc jego rozdzielczość jest kwestią ustawienia przy eksporcie, a nie czymś, co trzeba przewidzieć na starcie.</p>
+    <p>Cena jest jedna i trzeba ją znać: kafelkowanie samo w sobie tworzy rytm, dokładnie ten, o którym mówił poprzedni rozdział. Duża jednolita ściana pokryta jednym kaflem zdradzi się powtarzającym się wzorem — i dlatego baza kafelkowa nigdy nie występuje sama.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Warstwa druga</div>
+    <h2>Dekale: co temu obiektowi się przydarzyło</h2>
+    <p><span class="term-violet">Dekal</span> to osobny element nakładany na powierzchnię: zaciek pod rurą, wytarcie przy klamce, numer na drzwiach, ślad po uderzeniu. Technicznie bywa rzutowany na powierzchnię albo doklejony jako cienka geometria z teksturą i kanałem przezroczystości — ta druga odmiana, zwana <em>mesh decal</em>, jest w VFX prostsza, bo nie wymaga wsparcia renderera dla rzutowania i zachowuje się poprawnie przy displacemencie.</p>
+    <p>Dekale robią trzy rzeczy naraz. Rozbijają rytm kafla i rytm modułów. Niosą całą narrację powierzchni — bo to one, a nie materiał bazowy, mówią, że tu ktoś mieszkał, a tam coś eksplodowało. I, co dla VFX najważniejsze, <strong>są warstwą, więc pozostają edytowalne</strong>: notatka „ten zaciek jest za mocny i za wysoko” to przesunięcie obiektu i zmiana jednego parametru, a nie sesja w programie do malowania tekstur i ponowna publikacja mapy 8K.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Warstwa trzecia</div>
+    <h2>Blendy: gdzie jedno przechodzi w drugie</h2>
+    <p>Trzecia rola to mieszanie dwóch materiałów bazowych po powierzchni jednego obiektu: beton przechodzący w mech, metal w rdzę, sucha ziemia w błoto. Maskę tego przejścia można nieść na trzy sposoby, w kolejności od najtańszego: kolorem wierzchołków (grubo, ale za darmo), osobną maską o niskiej rozdzielczości (kompromis), albo — sposobem, który wygląda najlepiej i nic nie kosztuje w pamięci — <span class="term-violet">wysokością obu materiałów</span>: w miejscu przejścia wygrywa ten, który jest wyżej, więc rdza najpierw wypełnia zagłębienia, a nie równomiernie zakrywa wszystko. To ta sama mapa wysokości, która w Rozdziale 5 napędzała displacement; jeden zasób, dwa zastosowania.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Material.layers</span><span>Trzy role, jeden wynik</span></div>
+      <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrL" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#9c82d8"/>
+          </marker>
+        </defs>
+        <g font-family="IBM Plex Sans" font-size="11" fill="#ecebe4" text-anchor="middle">
+          <rect x="20" y="26" width="170" height="42" rx="6" fill="#20242c" stroke="#e8a33d" stroke-width="1.3"/>
+          <text x="105" y="45">baza kafelkowa</text>
+          <text x="105" y="60" font-family="IBM Plex Mono" font-size="9" fill="#8b909b">z czego to jest</text>
+
+          <rect x="20" y="78" width="170" height="42" rx="6" fill="#20242c" stroke="#4fc3c0" stroke-width="1.3"/>
+          <text x="105" y="97">dekale</text>
+          <text x="105" y="112" font-family="IBM Plex Mono" font-size="9" fill="#8b909b">co się przydarzyło</text>
+
+          <rect x="20" y="130" width="170" height="42" rx="6" fill="#20242c" stroke="#9c82d8" stroke-width="1.3"/>
+          <text x="105" y="149">blend po wysokości</text>
+          <text x="105" y="164" font-family="IBM Plex Mono" font-size="9" fill="#8b909b">gdzie przechodzi w co</text>
+        </g>
+        <path d="M190,47 C250,47 250,95 300,95" fill="none" stroke="#9c82d8" stroke-width="1.4" marker-end="url(#arrL)"/>
+        <path d="M190,99 h108" fill="none" stroke="#9c82d8" stroke-width="1.4" marker-end="url(#arrL)"/>
+        <path d="M190,151 C250,151 250,103 300,103" fill="none" stroke="#9c82d8" stroke-width="1.4" marker-end="url(#arrL)"/>
+        <rect x="304" y="60" width="180" height="76" rx="8" fill="#20242c" stroke="#ecebe4"/>
+        <text x="394" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="#ecebe4">powierzchnia</text>
+        <text x="394" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">unikalna, bez unikalnej mapy</text>
+        <g font-family="IBM Plex Mono" font-size="10" fill="#8b909b">
+          <text x="504" y="80">każda warstwa zostaje</text>
+          <text x="504" y="96">osobna — notatka dotyczy</text>
+          <text x="504" y="112">jednej z nich, nie całości</text>
+        </g>
+      </svg>
+      <div class="diagram-caption">Monolityczna mapa zapieka wszystkie decyzje naraz. Warstwy zostawiają je otwarte.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Granice</div>
+    <h2>Kiedy warstwy przegrywają z unikalną mapą</h2>
+    <p>Ten sposób pracy ma wyraźny zakres. Przegrywa wszędzie tam, gdzie powierzchnia jest z natury niepowtarzalna i ciągła: twarz, skóra, tkanina o konkretnym wzorze, obiekt skanowany, którego wartością jest właśnie to, że jest jedyny. Przegrywa też przy bardzo bliskim zbliżeniu, gdzie liczba warstw potrzebnych do udawania unikalności przekracza koszt po prostu namalowania jej wprost.</p>
+    <p>I ma koszt, o którym gamedev mówi rzadko, bo w silniku jest on tani, a w renderze offline bywa realny: każda warstwa to dodatkowe odczyty tekstur na próbkę. Materiał złożony z pięciu warstw i trzydziestu dekali potrafi być wolniejszy od jednej dużej mapy — dlatego przy assetach tłowych warto sprawdzić, czy warstwy nie są droższe od tego, co miały zaoszczędzić.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Materiał kafelkowy (tileable)</dt>
+      <dd>Tekstura powtarzalna w obu kierunkach bez widocznego szwu; opisuje substancję, nie konkretny obiekt.</dd>
+      <dt>Dekal</dt>
+      <dd>Osobny element nakładany na powierzchnię, niosący unikalny detal. Jako geometria — mesh decal.</dd>
+      <dt>Blend po wysokości</dt>
+      <dd>Mieszanie dwóch materiałów maską wyprowadzoną z ich map wysokości, dzięki czemu przejście wypełnia zagłębienia.</dd>
+      <dt>Kolor wierzchołków</dt>
+      <dd>Dane malowane bezpośrednio na siatce, najtańszy nośnik maski przejścia; rozdzielczość ograniczona gęstością siatki.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Mamy budżet, gęstość, moduły i warstwy — cztery decyzje, które trzeba podjąć wcześnie. Następny rozdział jest o warstwie najnudniejszej i najczęściej pomijanej: o tym, żeby plik miał właściwą nazwę, skalę, pivot i UV, bo bez tego żadna z poprzednich czterech nie da się zautomatyzować.</p>
   </div>
 
 <div class="site-nav chapter-nav">

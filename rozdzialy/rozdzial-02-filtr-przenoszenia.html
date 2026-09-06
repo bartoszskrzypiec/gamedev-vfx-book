@@ -28,9 +28,103 @@
   <h1>Filtr: co się przenosi, a co tylko wygląda, jakby się przenosiło</h1>
   <p class="subtitle">Zanim przeciągniesz cokolwiek z gamedevu do VFX, warto mieć trzy pytania, które odsiewają patenty realnie użyteczne od kultu cargo.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Nie każdy patent z gamedevu jest wart przeniesienia — i nie dlatego, że VFX jest lepsze, tylko dlatego, że część z nich rozwiązuje problem, którego w VFX nie ma.</li>
+      <li>Trzy pytania odsiewają je szybciej niż intuicja: czy technika oszczędza dane, czy matematykę; kto i kiedy płaci jej koszt; i czy wytrzyma zbliżenie kamery.</li>
+      <li>Najczęstszy błąd to kopiowanie narzędzia zamiast nawyku. Kupienie licencji na silnik nie przenosi kultury mierzenia — a to ona była wartościowa.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Rozdział 1 skończył się regułą kciuka: oszczędzanie danych przenosi się, oszczędzanie matematyki wymaga uzasadnienia. To dobry pierwszy filtr, ale za gruby, żeby rozstrzygnąć konkretny przypadek — bo prawdziwe techniki rzadko robią wyłącznie jedno albo drugie. Ten rozdział rozkłada tę regułę na trzy pytania, które da się zadać po kolei i które w praktyce dają jednoznaczną odpowiedź.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Pytanie pierwsze</div>
+    <h2>Czy to oszczędza dane, czy matematykę?</h2>
+    <p><span class="term-violet">Technika oszczędzająca dane</span> zmniejsza to, co trzeba wczytać, przechować i przekazać dalej: mniej unikalnych tekstur, mniej wierzchołków, mniej materiałów, mniej plików do wersjonowania. Taka technika działa niezależnie od tego, co dane potem konsumuje — ten sam trim sheet odciąża GPU w grze, węzeł farmy w renderze i viewport artysty przy pracy.</p>
+    <p><span class="term-amber">Technika oszczędzająca matematykę</span> podmienia poprawne obliczenie na tańsze przybliżenie: screen-space ambient occlusion zamiast policzonego zacienienia, odbicia z ekranu zamiast prześledzonych promieni, oświetlenie wypalone do lightmapy zamiast liczonego na bieżąco. Tu oszczędność jest realna tylko wtedy, gdy brakuje czasu na klatkę — a w renderze offline zwykle nie brakuje. Przeniesienie takiej techniki oznacza zwykle oddanie jakości za zasób, którego akurat było pod dostatkiem.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Pytanie drugie</div>
+    <h2>Kto płaci koszt i ile razy?</h2>
+    <p>Każda technika ma dwa rachunki: koszt zbudowania jej po stronie assetu i koszt użycia jej po stronie klatki. Gra zgadza się na wysoki pierwszy, żeby drugi był bliski zeru — bo drugi mnoży się przez miliardy klatek u milionów graczy. VFX ma odwrotną strukturę: klatka renderuje się kilkadziesiąt razy w życiu shotu, więc koszt użycia jest skończony, a koszt zbudowania płaci się czasem artysty, który jest najdroższym zasobem w całym rachunku.</p>
+    <p>Praktyczny wniosek jest niewygodny dla entuzjastów: technika wymagająca tygodnia przygotowania assetu, żeby render był o 15% szybszy, jest w grze oczywistą wygraną, a w shocie zwykle stratą. Odwrotnie — technika, która kosztuje pół godziny przy publikacji assetu i oszczędza pół godziny każdemu, kto go potem otworzy, wygrywa w VFX nawet wtedy, gdy w grze byłaby nieistotna. Dlatego walidacja przy publishu (Rozdział 25) przenosi się znakomicie, mimo że w grze jest to nudna infrastruktura.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Pytanie trzecie</div>
+    <h2>Czy to wytrzyma zbliżenie?</h2>
+    <p>To pytanie odsiewa najwięcej. Gra ma nad obrazem kontrolę, jakiej film nie ma: projektant poziomu decyduje, skąd gracz może patrzeć, jak blisko podejdzie i w jakim świetle. Reżyser tej kontroli nie ma — a raczej ma ją odwrotnie, bo najeżdża kamerą dokładnie tam, gdzie mu się podoba, zwykle po tym, jak asset został zatwierdzony.</p>
+    <p>Wszystko, co w gamedevie działa <em>przy założeniu o dystansie</em>, trzeba więc przy przenoszeniu opatrzyć jawnym warunkiem: do jakiego rozmiaru na ekranie to jeszcze wygląda. Detal wyłącznie w mapie normalnych zdradza się na sylwetce, gdy obiekt zajmuje pół kadru. Imposter rozpada się przy ruchu kamery bliżej niż projektowano. Kaskada LOD-ów zbudowana pod ekran gracza nie ma poziomu odpowiadającego zbliżeniu makro. Żadna z tych rzeczy nie jest wadą techniki — jest wadą użycia jej poza zakresem, w którym miała sens.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Filter.decide</span><span>Trzy pytania po kolei</span></div>
+      <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrF" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#9c82d8"/>
+          </marker>
+        </defs>
+        <g font-family="IBM Plex Sans" font-size="11.5" fill="#ecebe4" text-anchor="middle">
+          <rect x="16" y="96" width="150" height="46" rx="7" fill="#20242c" stroke="#8b909b"/>
+          <text x="91" y="116">patent z gamedevu</text>
+          <text x="91" y="132" font-family="IBM Plex Mono" font-size="9.5" fill="#8b909b">kandydat</text>
+
+          <rect x="196" y="96" width="140" height="46" rx="7" fill="#20242c" stroke="#9c82d8"/>
+          <text x="266" y="116">dane czy</text><text x="266" y="132">matematyka?</text>
+
+          <rect x="366" y="96" width="140" height="46" rx="7" fill="#20242c" stroke="#9c82d8"/>
+          <text x="436" y="116">kto płaci</text><text x="436" y="132">i ile razy?</text>
+
+          <rect x="536" y="96" width="146" height="46" rx="7" fill="#20242c" stroke="#9c82d8"/>
+          <text x="609" y="116">wytrzyma</text><text x="609" y="132">zbliżenie?</text>
+        </g>
+        <line x1="166" y1="119" x2="192" y2="119" stroke="#9c82d8" stroke-width="1.6" marker-end="url(#arrF)"/>
+        <line x1="336" y1="119" x2="362" y2="119" stroke="#9c82d8" stroke-width="1.6" marker-end="url(#arrF)"/>
+        <line x1="506" y1="119" x2="532" y2="119" stroke="#9c82d8" stroke-width="1.6" marker-end="url(#arrF)"/>
+        <g font-family="IBM Plex Mono" font-size="10" fill="#4fc3c0" text-anchor="middle">
+          <text x="266" y="176">dane →</text>
+          <text x="436" y="176">raz, przy publishu →</text>
+          <text x="609" y="176">tak → przenieś</text>
+        </g>
+        <g font-family="IBM Plex Mono" font-size="10" fill="#e8a33d" text-anchor="middle">
+          <text x="266" y="72">matematyka ↑</text>
+          <text x="436" y="72">przy każdej klatce ↑</text>
+          <text x="609" y="72">nie ↑</text>
+          <text x="436" y="52">każde „w górę" to nie zakaz, tylko wymóg uzasadnienia dla konkretnego shotu</text>
+        </g>
+        <text x="350" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#8b909b">trzy pytania zadawane po kolei — pierwsze „nie" nie kończy sprawy, tylko podnosi próg dowodu</text>
+      </svg>
+      <div class="diagram-caption">Filtr nie odrzuca technik — wymusza powiedzenie na głos, czym się za nie płaci.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wynik filtra</div>
+    <h2>Co przechodzi, a co odpada</h2>
+    <p>Przepuszczone przez te trzy pytania patenty z tej książki układają się dość wyraźnie. <span class="term-violet">Przechodzą bez zastrzeżeń</span>: trim sheety, atlasy i kontrola texel density, modularność, budżety, LOD-y i proxy, instancing, walidacja assetu przy publishu, baking map pomocniczych (AO, krzywizna, pozycja), proceduralne generowanie wariantów, konwencje nazewnicze. Wszystkie oszczędzają dane, płacą raz i nie mają nic wspólnego z tym, jak blisko podejdzie kamera.</p>
+    <p><span class="term-amber">Odpadają albo wymagają uzasadnienia dla konkretnego shotu</span>: screen-space AO i odbicia jako źródło finalnego obrazu, wypalone oświetlenie dla ruchomego bohatera, look zbudowany na akumulacji temporalnej, detal wyłącznie w mapie normalnych na sylwetce, kompresja blokowa tekstur w drodze do renderu, tolerancja na popping przy przełączeniu LOD-a. Uwaga: „wymaga uzasadnienia" to nie to samo co „nigdy" — Rozdział 19 pokazuje shoty, w których przybliżenie real-time jest właściwą odpowiedzią, a Rozdział 22 całą gałąź produkcji, która na nim stoi.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Pułapka</div>
+    <h2>Kopiuje się nawyk, nie narzędzie</h2>
+    <p>Najdroższy błąd przy tego rodzaju transferze nie polega na wyborze złej techniki, tylko na wzięciu narzędzia zamiast nawyku, który je otaczał. Studio kupuje licencję na silnik gry i stawia w nim podgląd, ale nikt nie mierzy niczego, nie ma budżetów, nie ma walidacji przy publishu — więc po pół roku ma drugi, wolniejszy pipeline zamiast szybszej pętli decyzji. To, co w gamedevie miało wartość, było kulturą liczb, a nie plikiem wykonywalnym.</p>
+    <p>Dlatego kolejność rozdziałów w tej książce nie jest przypadkowa: budżet (Rozdział 4) idzie przed jakąkolwiek konkretną techniką, bo bez niego żadna z nich nie ma jak udowodnić, że pomogła.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Filtr trzech pytań</dt>
+      <dd>Dane czy matematyka; kto płaci i ile razy; czy wytrzyma zbliżenie. Kolejność ma znaczenie — pierwsze pytanie jest najtańsze do zadania.</dd>
+      <dt>Koszt runtime</dt>
+      <dd>Koszt ponoszony przy każdym wyświetleniu klatki. W grze mnożony przez wszystkich graczy, w VFX zamknięty w liczbie renderów shotu.</dd>
+      <dt>Kult cargo</dt>
+      <dd>Skopiowanie widocznej formy rozwiązania (narzędzia, nazwy stanowiska, formatu pliku) bez mechanizmu, który nadawał jej sens.</dd>
+      <dt>Zakres ważności</dt>
+      <dd>Warunek, przy którym technika jeszcze działa — najczęściej maksymalny rozmiar obiektu na ekranie. Przenoszona technika musi go nieść ze sobą jawnie.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Filtr jest gotowy, ale opiera się na założeniu, którego jeszcze nie sprawdziliśmy: że obie branże w ogóle mówią tym samym językiem o materiale, scenie i kolorze. Następny rozdział pokazuje, ile z tego fundamentu jest naprawdę wspólne — bo to on decyduje, czy przenoszenie patentów jest inżynierią, czy tłumaczeniem z jednego świata na drugi.</p>
   </div>
 
 <div class="site-nav chapter-nav">

@@ -28,9 +28,94 @@
   <h1>Modularność i kit-bashing: asset jako klocek</h1>
   <p class="subtitle">Set zbudowany z pięćdziesięciu powtarzalnych części zamiast pięciuset unikatów — i dlaczego wcale nie musi wyglądać na powtarzalny.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Modularność to zbudowanie środowiska z ograniczonego zestawu części pasujących do siebie na siatce, zamiast z unikalnych obiektów dopasowywanych ręcznie.</li>
+      <li>Prawdziwy zysk w VFX nie jest pamięciowy, tylko produkcyjny: set zbudowany modularnie da się przebudować po notatce reżysera w godzinę, a nie w tydzień.</li>
+      <li>Powtarzalność widać wtedy, gdy powtarza się <em>rytm</em>, a nie sam element — łamie się ją rotacją, dekalami i dressingiem, nie mnożeniem unikalnych modeli.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Korytarz z Rozdziału 5 miał jeden arkusz tekstur. Teraz to samo pytanie zadajemy geometrii: ile naprawdę różnych <em>kształtów</em> jest w tym korytarzu? Odpowiedź znów brzmi „mniej, niż obiektów” — ściana prosta, ściana z drzwiami, narożnik wewnętrzny, narożnik zewnętrzny, zakończenie, sufit, podłoga, i tym zestawem da się zbudować dowolnie długi korytarz o dowolnym kształcie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Fundament</div>
+    <h2>Siatka i reguła styku</h2>
+    <p>Modularność stoi na dwóch ustaleniach podjętych zanim powstanie pierwszy model. Pierwsze to <span class="term-violet">siatka</span> — wspólna jednostka, na której wielokrotności lądują wszystkie wymiary i punkty styku; w praktyce 100 cm dla architektury, 50 cm dla elementów mniejszych. Drugie to <span class="term-violet">reguła styku</span>: umowa, że krawędź łącząca jest zawsze płaska, zawsze w tym samym miejscu i zawsze o tej samej wysokości, żeby dowolny moduł pasował do dowolnego innego.</p>
+    <p>Te dwa ustalenia brzmią banalnie i są jedynym powodem, dla którego cała reszta działa. Moduł, który nie ląduje na siatce, wymaga ręcznego dosuwania — a jeden ręcznie dosunięty element unieważnia obietnicę, że set da się przebudować automatycznie.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Kit.assemble</span><span>7 modułów → dowolny korytarz</span></div>
+      <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+        <text x="20" y="22" font-family="IBM Plex Mono" font-size="10.5" fill="#e8a33d">ZESTAW · 7 części</text>
+        <g fill="#20242c" stroke="#e8a33d" stroke-opacity="0.8">
+          <rect x="20" y="32" width="60" height="46" rx="4"/><rect x="88" y="32" width="60" height="46" rx="4"/>
+          <rect x="156" y="32" width="60" height="46" rx="4"/><rect x="20" y="86" width="60" height="46" rx="4"/>
+          <rect x="88" y="86" width="60" height="46" rx="4"/><rect x="156" y="86" width="60" height="46" rx="4"/>
+          <rect x="88" y="140" width="60" height="46" rx="4"/>
+        </g>
+        <g font-family="IBM Plex Mono" font-size="8.5" fill="#8b909b" text-anchor="middle">
+          <text x="50" y="59">ściana</text><text x="118" y="59">drzwi</text><text x="186" y="59">okno</text>
+          <text x="50" y="113">narożnik</text><text x="118" y="113">zakończ.</text><text x="186" y="113">sufit</text>
+          <text x="118" y="167">podłoga</text>
+        </g>
+        <text x="118" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">siatka 100 cm</text>
+
+        <text x="270" y="22" font-family="IBM Plex Mono" font-size="10.5" fill="#4fc3c0">SET · 3 180 instancji tych samych 7 części</text>
+        <g fill="none" stroke="#4fc3c0" stroke-opacity="0.75">
+          <path d="M270,60 h340 v100 h-340 z"/>
+          <path d="M320,60 v100 M370,60 v100 M420,60 v100 M470,60 v100 M520,60 v100 M570,60 v100"/>
+          <path d="M270,110 h340"/>
+        </g>
+        <g fill="#4fc3c0" fill-opacity="0.18" stroke="none">
+          <rect x="370" y="60" width="50" height="50"/><rect x="470" y="110" width="50" height="50"/>
+          <rect x="270" y="110" width="50" height="50"/>
+        </g>
+        <text x="440" y="186" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">wypełnienia = drzwi i okna wstawione w tę samą kratkę</text>
+        <text x="440" y="204" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9c82d8">„przedłuż korytarz o 20 m” = dołożenie kolumn, nie przemodelowanie</text>
+      </svg>
+      <div class="diagram-caption">Wartość zestawu nie jest w oszczędności pamięci, tylko w tym, że zmiana układu jest tania.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dlaczego to jest patent dla VFX</div>
+    <h2>Notatka, która przychodzi za późno</h2>
+    <p>W grze modularność uzasadnia się pamięcią i czasem produkcji. W filmie oba te argumenty są słabsze — i właśnie dlatego warto uzasadnić ją inaczej. Prawdziwy argument brzmi: <strong>set modularny wytrzymuje zmianę</strong>. Notatka „korytarz jest za krótki, kamera nie ma gdzie jechać” przychodzi zawsze po zatwierdzeniu setu i zawsze za późno. Set zbudowany z unikalnych, dopasowanych do siebie brył wymaga wtedy przemodelowania, powtórnego rozłożenia UV i powtórnego lookdevu. Set modularny wymaga dołożenia siedmiu instancji.</p>
+    <p>To ten sam argument, który uzasadnia proceduralność (Rozdział 24), tylko na niższym poziomie abstrakcji — i dlatego oba patenty tak dobrze się uzupełniają.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Ukrywanie rytmu</div>
+    <h2>Powtórzenie widać, gdy powtarza się odstęp</h2>
+    <p>Zarzut wobec modularności jest zawsze ten sam: „to będzie widać”. Będzie — jeśli powtórzy się <em>rytm</em>. Oko nie wyłapuje tego, że ta sama ściana występuje czterdzieści razy; wyłapuje, że co czwarta ściana jest identyczna w identycznym odstępie. Środki zaradcze, w kolejności od najtańszego:</p>
+    <ul class="compact">
+      <li><strong>Obrót i odbicie.</strong> Ten sam moduł obrócony o 180° czyta się jako inny, o ile tekstura nie ma kierunkowego detalu. Koszt: zero.</li>
+      <li><strong>Dekale.</strong> Zacieki, uszkodzenia, napisy nakładane osobno, w nieregularnych miejscach. Jeden zestaw dekali rozbija rytm skuteczniej niż dziesięć wariantów ściany (Rozdział 8).</li>
+      <li><strong>Dressing.</strong> Rzeczy postawione przed ścianą — skrzynie, kable, rury — łamią powtarzalność, nie dotykając modułów. To także najbardziej naturalna praca dla działu set dressingu, więc nie wymaga nowego procesu.</li>
+      <li><strong>Wariant, ale rzadko.</strong> Trzy warianty ściany rozwiązują większość problemów; dwadzieścia wariantów oznacza, że zestaw przestał być zestawem i wróciliśmy do unikatów tylnymi drzwiami.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kit-bashing</div>
+    <h2>Ta sama zasada, użyta odwrotnie</h2>
+    <p>Kit-bashing — budowanie wyglądającego na unikalny obiektu z biblioteki gotowych części — jest tą samą ideą zastosowaną nie do środowiska, tylko do pojedynczego assetu. VFX zna go od dekad, choć rzadko nazywa: powierzchnie statków w klasycznej fantastyce naukowej to sklejone elementy modeli plastikowych, bo tak było szybciej i wyglądało bogato.</p>
+    <p>Różnica polega na tym, że gamedev robi to systemowo: biblioteka części jest wersjonowana, opisana i wspólna dla zespołu, a nie prywatnym folderem jednego artysty. Ta jedna zmiana — <span class="term-violet">biblioteka zamiast folderu</span> — jest właściwym patentem do przeniesienia, bo dopiero ona sprawia, że drugi artysta korzysta z pracy pierwszego. Rozdział 26 wraca do tego przy okazji bibliotek kupowanych i skanowanych.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Moduł</dt>
+      <dd>Element zestawu zaprojektowany tak, by łączyć się z każdym innym na wspólnej siatce.</dd>
+      <dt>Siatka (grid)</dt>
+      <dd>Wspólna jednostka wymiarowa, na której wielokrotności lądują wszystkie punkty styku modułów.</dd>
+      <dt>Reguła styku</dt>
+      <dd>Umowa o kształcie i położeniu krawędzi łączącej — warunek wymienności modułów.</dd>
+      <dt>Kit-bashing</dt>
+      <dd>Budowanie pojedynczego, unikalnie wyglądającego obiektu z biblioteki powtarzalnych części.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Zestaw modułów pokryty jednym arkuszem tekstur jest tani, spójny i — jeśli nic z tym nie zrobić — nudny. Następny rozdział jest o warstwie, która dokłada charakter: dekalach, materiałach kafelkowych i blendach, czyli o tym, jak uzyskać unikalność bez unikalnych tekstur.</p>
   </div>
 
 <div class="site-nav chapter-nav">

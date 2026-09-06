@@ -28,9 +28,64 @@
   <h1>LOD-y: dyscyplina geometrii dostatecznie dobrej</h1>
   <p class="subtitle">Proxy i standin z VFX to LOD w przebraniu. Różnica polega na tym, że w grze ktoś policzył, kiedy dokładnie przełączyć.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>LOD to zestaw uproszczonych wersji tej samej siatki i reguła mówiąca, kiedy przełączyć się na tańszą. VFX ma pierwszą połowę tego mechanizmu — proxy i standiny — i prawie nigdy nie ma drugiej.</li>
+      <li>Próg przełączenia wyprowadza się z rozmiaru obiektu na ekranie, nie z odległości: obiekt zajmujący 3% kadru nie potrzebuje geometrii, której nie widać.</li>
+      <li>W renderze offline zysk bywa większy niż w grze, bo geometria kosztuje tam nie tylko pamięć, ale i czas budowy struktury przyspieszającej dla każdej klatki.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Każdy pipeline VFX ma proxy — uproszczoną reprezentację assetu do pracy w viewporcie — i standiny, czyli odwołania do geometrii wczytywanej dopiero w czasie renderu. To jest dokładnie pierwsza połowa mechanizmu LOD. Brakuje drugiej: reguły, która automatycznie wybiera właściwy poziom w zależności od tego, jak duży obiekt jest w kadrze. W VFX tę decyzję zwykle podejmuje człowiek, raz, dla całego shotu — albo nie podejmuje jej nikt i wszystko renderuje się w pełnej rozdzielczości.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kaskada</div>
+    <h2>Ile poziomów i o ile rzadszych</h2>
+    <p>Typowa kaskada w grach to trzy do pięciu poziomów, z których każdy ma mniej więcej połowę trójkątów poprzedniego. Nie jest to reguła estetyczna, tylko konsekwencja tego, jak działa perspektywa: obiekt oddalający się dwukrotnie zajmuje czterokrotnie mniejszą powierzchnię ekranu, więc może mieć czterokrotnie mniej detalu przy tej samej gęstości trójkątów na piksel.</p>
+    <div class="worked">
+      LOD0   84 000 tris   —  obiekt zajmuje > 25% wysokości kadru<br>
+      LOD1   38 000 tris   —  25% … 12%<br>
+      LOD2   12 000 tris   —  12% … 5%<br>
+      LOD3    1 200 tris   —  &lt; 5%  (dalej: imposter, R.11)<br><br>
+      próg liczony z <span style="color:#4fc3c0;">rozmiaru na ekranie</span>, nie z metrów —<br>
+      ta sama reguła działa dla obiektywu 24 mm i 300 mm
+    </div>
+    <p>Ostatnia uwaga jest tym, co czyni tę technikę przenośną do filmu. Próg oparty na odległości psuje się przy zmianie ogniskowej, a w produkcji filmowej ogniskowa zmienia się co shot. Próg oparty na udziale w kadrze jest od niej niezależny — i to on powinien trafić do VFX, a nie tabela metrów przepisana z gry.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Dlaczego offline zyskuje więcej</div>
+    <h2>Geometria kosztuje dwa razy</h2>
+    <p>W grze nadmiarowa geometria kosztuje przepustowość i czas rasteryzacji. W path tracerze kosztuje coś dodatkowego: <span class="term-cyan">budowę struktury przyspieszającej</span> — hierarchii, która pozwala szybko sprawdzać, w co trafia promień. Ta struktura buduje się dla każdej klatki i jej koszt rośnie z liczbą prymitywów, zanim jeszcze poleci pierwszy promień. Scena z lasem z dziesięciu tysięcy w pełni szczegółowych drzew potrafi spędzić więcej czasu na przygotowaniu niż na liczeniu światła.</p>
+    <p>Dlatego zdanie „przecież mamy dużo pamięci” nie jest odpowiedzią. Płaci się nie tylko pamięcią, ale i czasem startu każdej klatki, pomnożonym przez liczbę klatek i liczbę wersji shotu.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przełączenie</div>
+    <h2>Popping, którego w filmie nie wolno mieć</h2>
+    <p>Największa różnica praktyczna dotyczy momentu przełączenia. Gra akceptuje drobne skoki (popping), bo gracz patrzy gdzie indziej, a kolejna klatka przyjdzie za 16 ms. Film nie akceptuje ich w ogóle: skok geometrii w środku ujęcia jest błędem, który wróci z review.</p>
+    <p>Stąd trzy zasady dla wersji filmowej. Po pierwsze: <strong>przełączenie tylko poza kadrem albo pod cięciem</strong> — jeśli obiekt jest widoczny przez całe ujęcie, dostaje jeden poziom na cały shot. Po drugie: poziom wybiera się dla <em>najbliższej</em> klatki ujęcia, nie dla średniej. Po trzecie: sylwetka jest nienaruszalna — upraszczać wolno wnętrze bryły, ale kontur decyduje o tym, czy oko zauważy podmianę, więc redukcja, która ścina narożniki, jest gorsza od redukcji o połowę agresywniejszej w środku. Dodatek E rozkłada progi, histerezę i sposób ich policzenia.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co z tego zrobić</div>
+    <h2>Automat, którego VFX nie ma</h2>
+    <p>Realny patent do przeniesienia nie brzmi „róbcie LOD-y” — bo proxy już są. Brzmi: <span class="term-violet">niech wybór poziomu będzie policzony, a nie zgadnięty</span>. Narzędzie, które dla każdego assetu w shocie liczy jego maksymalny udział w kadrze przez całe ujęcie i proponuje poziom, jest kilkudziesięcioma liniami kodu nad tym, co pipeline już wie o kamerze i o pozycjach obiektów. Efektem jest lista: „te 140 assetów mogą zejść o dwa poziomy, oszczędność 60% geometrii sceny, żaden nie przekracza 4% kadru”. To jest rozmowa, którą da się odbyć z supervisorem — inaczej niż „może zrobimy lżejsze proxy”.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>LOD</dt>
+      <dd>Poziom szczegółowości — jedna z uproszczonych wersji tej samej siatki, wraz z regułą, kiedy jej użyć.</dd>
+      <dt>Proxy / standin</dt>
+      <dd>Odpowiednik LOD-a w VFX: uproszczona lub odroczona reprezentacja assetu, zwykle wybierana ręcznie.</dd>
+      <dt>Udział w kadrze (screen size)</dt>
+      <dd>Ułamek wysokości lub powierzchni kadru zajmowany przez obiekt; właściwa podstawa progu przełączenia.</dd>
+      <dt>Popping</dt>
+      <dd>Widoczny skok wyglądu w momencie zmiany poziomu. Tolerowany w grach, niedopuszczalny w środku filmowego ujęcia.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Kaskada LOD-ów kończy się w momencie, w którym obiekt zajmuje kilka pikseli i nawet tysiąc trójkątów jest przesadą. Następny rozdział jest o tym, co przychodzi po ostatnim poziomie: o zastąpieniu geometrii jej obrazem.</p>
   </div>
 
 <div class="site-nav chapter-nav">

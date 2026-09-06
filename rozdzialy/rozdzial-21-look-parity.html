@@ -28,9 +28,77 @@
   <h1>Look parity: dopiąć preview do finalnego renderu</h1>
   <p class="subtitle">Preview, któremu nie można zaufać, jest gorszy niż jego brak — jak zbudować most między silnikiem a renderfarmą, który nie kłamie o kolorze.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Look parity to nie „identyczny obraz”, tylko gwarancja, że decyzja podjęta na podglądzie pozostaje słuszna po finalnym renderze.</li>
+      <li>Buduje się ją od dołu: wspólny config koloru, wspólne źródło tekstur, ten sam model powierzchni, ta sama scena — i dopiero na końcu porównanie obrazów.</li>
+      <li>Potrzebna jest scena kontrolna i liczba: powtarzalny zestaw kul i tablic renderowany po obu stronach, z ustalonym progiem odchylenia, sprawdzany automatycznie po każdej zmianie.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Rozdział 17 postawił warunek: podgląd musi być godny zaufania, inaczej krótka pętla produkuje decyzje do cofnięcia. Rozdział 19 wyjaśnił, dlaczego identyczność jest nieosiągalna. Ten rozdział jest o tym, co da się osiągnąć zamiast niej — i o tym, że jest to znacznie mniej ambitne, a przez to wykonalne.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Właściwy cel</div>
+    <h2>Zgodność decyzji, nie zgodność pikseli</h2>
+    <p>Warto zdefiniować parity operacyjnie: <span class="term-violet">jeśli na podglądzie A wygląda lepiej niż B, to po finalnym renderze A nadal wygląda lepiej niż B</span>. To wszystko. Podgląd może być jaśniejszy, może mieć uproszczone odbicia, może nie mieć rozmycia głębi — pod warunkiem, że nie odwraca porządku. Ta definicja jest osiągalna, mierzalna i, co najważniejsze, wystarczająca do tego, po co podgląd istnieje.</p>
+    <p>Definicja „obrazy mają być identyczne” jest natomiast nieosiągalna i szkodliwa, bo prowadzi do porzucenia całego pomysłu po pierwszym porównaniu.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kolejność</div>
+    <h2>Cztery warstwy, od najtwardszej</h2>
+    <ul class="compact">
+      <li><strong>Kolor.</strong> Ten sam config OCIO, ta sama transformacja wyświetlania, ta sama interpretacja przestrzeni tekstur po obu stronach. To jest warstwa, w której rozjazd jest najczęstszy i najgłupszy — i jedyna, w której da się osiągnąć zgodność dokładną, a nie przybliżoną.</li>
+      <li><strong>Tekstury.</strong> Jedno źródło, konwersja do obu formatów automatyczna przy publikacji (Rozdział 15). Podgląd czytający inny plik niż finał nie jest podglądem.</li>
+      <li><strong>Model powierzchni.</strong> Ten sam zestaw parametrów o tym samym znaczeniu — tu pomaga MaterialX i OpenPBR (Rozdział 18). Roughness 0,4 musi znaczyć to samo po obu stronach, nawet jeśli obliczenie różni się w szczegółach.</li>
+      <li><strong>Scena.</strong> Wspólny USD, te same transformacje, ta sama kamera z tą samą ogniskową i tym samym rozmiarem matrycy. Brzmi banalnie i jest najczęstszym źródłem różnicy w kadrze.</li>
+    </ul>
+    <p>Kolejność nie jest przypadkowa. Zaczynanie od porównywania obrazów, zanim te cztery warstwy się zgadzają, jest szukaniem różnicy tam, gdzie odpowiedź jest znana z góry.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Scena kontrolna</div>
+    <h2>Liczba zamiast opinii</h2>
+    <p>Praktyka, która to domyka, jest wprost przeniesiona z inżynierii: <span class="term-violet">powtarzalna scena kontrolna renderowana po obu stronach po każdej zmianie configu</span>. Zestaw kul o roughness od 0 do 1, kilka materiałów referencyjnych, tablica szarości, tablica kolorów, jedno światło o znanej intensywności i jedna mapa środowiskowa.</p>
+    <div class="worked">
+      scena kontrolna: 12 kul × 4 materiały + tablica ColorChecker<br>
+      renderowana: silnik i path tracer, ta sama kamera, ten sam config OCIO<br><br>
+      metryka:   średnia różnica barwy na polach tablicy<br>
+      próg:      ostrzeżenie &gt; 2,0   ·   błąd &gt; 4,0<br><br>
+      uruchamiane: przy każdej zmianie configu koloru, wersji silnika
+      albo biblioteki materiałów — tak jak testy jednostkowe kodu
+    </div>
+    <p>Wartość tego rozwiązania nie leży w samej liczbie, tylko w tym, że rozjazd wychodzi na jaw w dniu, w którym powstał, a nie trzy tygodnie później na shocie. To jest ta sama idea co walidacja assetów z Rozdziału 25, przeniesiona z plików na wygląd.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co zostaje różne</div>
+    <h2>Lista, którą trzeba mieć spisaną</h2>
+    <p>Nawet przy idealnie ustawionych czterech warstwach zostaje zestaw różnic wynikających z samego sposobu liczenia. Warto go mieć spisany i pokazywać ludziom oceniającym podgląd — bo to jest właśnie „umowa o podglądzie” z Rozdziału 19 w formie użytecznej:</p>
+    <ul class="compact">
+      <li>wnętrza oświetlone pośrednio będą w podglądzie ciemniejsze (mniej odbić),</li>
+      <li>bardzo szorstkie metale będą ciemniejsze (brak wielokrotnego rozproszenia między mikrofasetami, Rozdział 3),</li>
+      <li>przenoszenie koloru między powierzchniami będzie słabsze i bardziej uśrednione,</li>
+      <li>kontakt cienia w szczelinach będzie miększy,</li>
+      <li>obraz w ruchu będzie miał smużenie, którego finał nie ma.</li>
+    </ul>
+    <p>Żadna z tych pozycji nie unieważnia podglądu. Wszystkie unieważniają go, jeśli nie są zapisane — bo wtedy zamiast informacji staje się źródłem sporu.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Look parity</dt>
+      <dd>Zgodność podglądu z finałem na poziomie decyzji: to, co wygląda lepiej w podglądzie, wygląda lepiej po renderze.</dd>
+      <dt>Scena kontrolna</dt>
+      <dd>Powtarzalny zestaw obiektów referencyjnych renderowany po obu stronach do wykrywania rozjazdu.</dd>
+      <dt>Transformacja wyświetlania</dt>
+      <dd>Przekształcenie z przestrzeni roboczej na to, co widać na monitorze; musi być identyczne po obu stronach.</dd>
+      <dt>Umowa o podglądzie</dt>
+      <dd>Spisana lista różnic, których w podglądzie nie należy oceniać.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Wszystko dotąd zakładało, że obraz z silnika jest narzędziem pomocniczym. Następny rozdział zajmuje się sytuacją, w której trafia on wprost przed obiektyw kamery filmowej i staje się finalnym pikselem — czyli wirtualną produkcją.</p>
   </div>
 
 <div class="site-nav chapter-nav">

@@ -28,9 +28,61 @@
   <h1>Lumen, ray tracing i path tracer: kiedy przybliżenie wystarcza</h1>
   <p class="subtitle">Real-time GI to seria świadomych kłamstw o świetle. Warto wiedzieć których, żeby rozpoznać moment, w którym kłamstwo widać na ekranie.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Real-time GI to nie jedna technika, tylko zestaw przybliżeń: uproszczona reprezentacja sceny, ograniczona liczba odbić i akumulacja wyniku w czasie.</li>
+      <li>Każde z tych przybliżeń psuje się w rozpoznawalny sposób — i to jest wiedza użyteczna, bo pozwala patrzeć na podgląd i wiedzieć, czemu można ufać, a czego nie oceniać.</li>
+      <li>Path tracer nie jest „lepszą wersją tego samego”: liczy odpowiedź, o którą się pyta, kosztem czasu, i dlatego jest właściwym narzędziem wtedy, gdy odpowiedź musi być poprawna, a nie tylko wiarygodna.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Zdanie „silnik ma teraz ray tracing, więc różnica zniknęła” jest w obiegu od kilku lat i jest w połowie prawdziwe. Śledzenie promieni faktycznie trafiło do silników i faktycznie zlikwidowało najgorsze artefakty poprzedniej epoki. Nie zlikwidowało natomiast tego, co robi różnicę: liczby odbić, wierności reprezentacji sceny i sposobu, w jaki wynik jest zbierany w czasie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przybliżenie pierwsze</div>
+    <h2>Scena, po której liczy się światło, nie jest tą, którą widać</h2>
+    <p>Śledzenie promieni w czasie rzeczywistym rzadko odbywa się po dokładnej geometrii. Zwykle istnieje <span class="term-amber">uproszczona reprezentacja</span> sceny — zgrubne bryły, sygnaturowe pola odległości albo uproszczone siatki — i to po niej wędrują promienie oświetlenia pośredniego. Materiał na tej reprezentacji też bywa uproszczony do jednego uśrednionego koloru.</p>
+    <p>Objawy, po których to widać: światło odbite od powierzchni z wyraźnym wzorem przychodzi w jednym uśrednionym kolorze; drobne obiekty nie rzucają światła pośredniego w ogóle, bo w uproszczonej reprezentacji ich nie ma; kontakt cienia w wąskich szczelinach jest zbyt miękki. Wniosek praktyczny: <strong>podgląd nadaje się do oceny kierunku i intensywności światła, nie do oceny subtelnego przenoszenia koloru</strong>.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przybliżenie drugie</div>
+    <h2>Odbić jest tyle, na ile starczyło budżetu</h2>
+    <p>Path tracer dokłada odbicia, aż wkład kolejnego przestanie mieć znaczenie — w praktyce ustawia się kilka do kilkunastu. Real-time liczy zwykle jedno, a to, co miałoby przyjść dalej, zastępuje przybliżeniem: przechowywanym wcześniej stanem oświetlenia, uśrednioną wartością albo po prostu pominięciem.</p>
+    <p>Widać to najmocniej we wnętrzach oświetlonych pośrednio — pokój, do którego światło wchodzi przez jedno okno i odbija się trzy razy, zanim dotrze w głąb, będzie w podglądzie za ciemny. To akurat błąd wygodny, bo przewidywalny i jednokierunkowy: jeśli podgląd pokazuje wystarczająco jasno, finał będzie jaśniejszy, nie ciemniejszy.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Przybliżenie trzecie</div>
+    <h2>Wynik zbierany w czasie, nie w klatce</h2>
+    <p>Najpoważniejsze różnice bierze na siebie <span class="term-amber">akumulacja temporalna</span>: klatka korzysta z wyników poprzednich klatek, przesuniętych zgodnie z ruchem. Dzięki temu obraz jest stabilny mimo śladowej liczby próbek — i dzięki temu też pojawiają się artefakty, których w renderze offline nie ma: smużenie za ruchomymi obiektami, opóźnienie reakcji oświetlenia na zmianę, dziury w miejscach odsłoniętych przez ruch, migotanie na cienkich elementach.</p>
+    <p>Dla VFX ma to jedną konsekwencję, o której warto pamiętać przy każdej ocenie podglądu: <strong>obraz zatrzymany i obraz w ruchu to dwa różne obrazy</strong>. Wygląd zaakceptowany na nieruchomej klatce może nie przetrwać jazdy kamery, a to jest dokładnie odwrotność przyzwyczajenia z renderu offline, gdzie każda klatka liczy się niezależnie i ruch niczego nie psuje. Rozdział 20 wraca do tego przy okazji rekonstrukcji temporalnej.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Kiedy przybliżenie wystarcza</div>
+    <h2>Trzy kryteria</h2>
+    <ul class="compact">
+      <li><strong>Gdy decyzja jest o kompozycji, nie o wartości.</strong> Kadr, ruch, blokowanie, kierunek światła — tu przybliżenie jest wystarczające i wygrywa czasem.</li>
+      <li><strong>Gdy obraz idzie do dalszej obróbki, a nie na ekran.</strong> Podgląd dla reżysera, materiał referencyjny, warstwa pomocnicza — wszystko, co nie jest finalnym pikselem.</li>
+      <li><strong>Gdy oglądający zna umowę.</strong> To kryterium jest społeczne, nie techniczne, i najczęściej pomijane: podgląd pokazany bez powiedzenia, czym różni się od finału, produkuje notatki dotyczące artefaktów przybliżenia. Zespół traci wtedy dzień na poprawianie czegoś, co i tak by zniknęło.</li>
+    </ul>
+    <p>I przypadek graniczny, który jest osobną gałęzią produkcji: wirtualna produkcja, gdzie obraz z silnika trafia na ścianę LED i zostaje sfilmowany, czyli staje się finalnym pikselem mimo wszystkich przybliżeń. Rozdział 22 pokazuje, co się wtedy zmienia.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Reprezentacja uproszczona</dt>
+      <dd>Zgrubna wersja sceny, po której liczone jest oświetlenie pośrednie w czasie rzeczywistym.</dd>
+      <dt>Liczba odbić</dt>
+      <dd>Ile razy śledzi się światło odbite. Główne źródło różnicy jasności między podglądem a finałem we wnętrzach.</dd>
+      <dt>Akumulacja temporalna</dt>
+      <dd>Zbieranie wyniku z wielu klatek przesuwanych zgodnie z ruchem; źródło stabilności i zarazem smużenia.</dd>
+      <dt>Umowa o podglądzie</dt>
+      <dd>Jawne ustalenie, czego w podglądzie nie należy oceniać. Warunek, żeby krótka pętla nie generowała fałszywych notatek.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Skoro obraz w ruchu powstaje z akumulacji, warto zajrzeć w mechanizm, który to umożliwia — i sprawdzić, ile z niego przechodzi do renderu offline. Następny rozdział jest o odszumianiu, skalowaniu i wektorach ruchu, czyli o tej samej matematyce po obu stronach.</p>
   </div>
 
 <div class="site-nav chapter-nav">

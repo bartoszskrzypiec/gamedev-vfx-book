@@ -28,9 +28,56 @@
   <h1>Shader graph, OSL i MaterialX</h1>
   <p class="subtitle">Dwa sposoby myślenia o materiale — graf, który musi skompilować się do GPU, i graf, który może pozwolić sobie na pętlę — plus standard, który próbuje je pogodzić.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Shader graph w silniku kompiluje się do programu wykonywanego dla każdego piksela, więc nie znosi pętli o nieznanej długości ani rozgałęzień, które rozjeżdżają sąsiednie piksele.</li>
+      <li>OSL działa w renderze offline, gdzie shader jest wywoływany dla próbki i wolno mu wykonać dowolne obliczenie — łącznie z odczytem tekstury zależnym od wyniku wcześniejszego odczytu.</li>
+      <li>MaterialX próbuje pogodzić oba światy, opisując graf niezależnie od tego, kto go wykona. Gwarantuje przenośność <em>opisu</em>, nie identyczność obrazu.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Materiał w obu branżach wygląda tak samo: siatka węzłów, w której tekstury i liczby wpływają do parametrów powierzchni. Podobieństwo interfejsu przykrywa jednak dość zasadniczą różnicę w tym, co pod spodem wolno zrobić — i to ona tłumaczy, dlaczego materiał przeniesiony z silnika do renderu czasem nie ma odpowiednika, a czasem ma odpowiednik zbyt kosztowny, żeby go użyć.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Strona gry</div>
+    <h2>Program dla każdego piksela</h2>
+    <p>Graf w silniku jest kompilowany do programu uruchamianego równolegle dla ogromnej liczby pikseli naraz. Z tego wynikają ograniczenia, które nie są kaprysem narzędzia:</p>
+    <ul class="compact">
+      <li><strong>Pętle o nieznanej długości są drogie</strong>, bo grupa sąsiednich pikseli wykonuje instrukcje wspólnie — jeśli jeden potrzebuje dwustu obrotów, a reszta dwóch, wszystkie czekają.</li>
+      <li><strong>Rozgałęzienia kosztują podobnie</strong>: gdy sąsiednie piksele idą różnymi gałęziami, sprzęt wykonuje obie i odrzuca niepotrzebny wynik.</li>
+      <li><strong>Liczba odczytów tekstur jest budżetowana</strong> i, co ważniejsze, odczyt zależny od wyniku innego odczytu psuje mechanizm wyliczania poziomu mip, bo sprzęt nie wie z góry, gdzie sięgnie.</li>
+    </ul>
+    <p>Dlatego materiał w grze jest z natury <em>płaski</em>: dużo mnożeń i mieszania gotowych map, mało logiki. Warstwowy autoring z Rozdziału 8 nie jest przypadkiem — jest tym, co w tych ograniczeniach wychodzi najlepiej.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Strona renderu</div>
+    <h2>Shader wywoływany dla próbki</h2>
+    <p>OSL wywołuje się dla pojedynczej próbki podczas śledzenia ścieżki. Nie ma tu grupy pikseli idących wspólnie, więc pętla, rekurencja i odczyt zależny od wcześniejszego odczytu są normalną praktyką. Shader może też robić rzeczy, których w grze po prostu nie ma jak wyrazić — na przykład opisać powierzchnię jako zbiór <em>zamknięć</em>, czyli deklaracji „ta powierzchnia rozprasza światło w taki sposób”, zamiast obliczać kolor od razu. To pozwala rendererowi zdecydować później, jak i skąd tę powierzchnię próbkować.</p>
+    <p>Ta jedna różnica ma praktyczną konsekwencję przy przenoszeniu: <strong>materiał z gry da się zwykle odtworzyć w renderze, materiał z renderu w grze — nie zawsze</strong>. Kierunek transferu jest asymetryczny i warto o tym pamiętać, planując, gdzie materiał powstaje. Jeśli asset ma żyć po obu stronach, autorstwo materiału po stronie ograniczeń gry oszczędza późniejszego tłumaczenia.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: MaterialX</div>
+    <h2>Wspólny opis, nie wspólny wynik</h2>
+    <p>MaterialX opisuje graf materiału w formie niezależnej od tego, kto go potem wykona, i dokłada do tego bibliotekę węzłów o zdefiniowanym znaczeniu oraz model powierzchni (OpenPBR), który ma znaczyć to samo wszędzie. To realny postęp — zwłaszcza w połączeniu z USD, które przenosi scenę, ale materiału samo z siebie nie gwarantuje (Rozdział 3).</p>
+    <p>Trzeba jednak rozumieć zakres tej obietnicy. MaterialX gwarantuje, że <span class="term-violet">obie strony przeczytają ten sam graf i zrozumieją go tak samo</span>. Nie gwarantuje, że obraz będzie identyczny — bo to zależy od tego, jak każda ze stron liczy oświetlenie, ile odbić uwzględnia i jakich przybliżeń używa (Rozdział 19). Przenośny opis materiału to warunek konieczny parity, nie parity samo w sobie. Dodatek L rozkłada, co dokładnie standard obiecuje, a czego nie.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Shader graph</dt>
+      <dd>Materiał jako siatka węzłów; w silniku kompilowany do programu wykonywanego równolegle dla wielu pikseli.</dd>
+      <dt>OSL</dt>
+      <dd>Język shaderów renderów offline; shader wywoływany dla próbki, bez ograniczeń na pętle i odczyty zależne.</dd>
+      <dt>Zamknięcie (closure)</dt>
+      <dd>Deklaracja sposobu rozpraszania światła przez powierzchnię, którą renderer próbkuje samodzielnie, zamiast gotowego koloru.</dd>
+      <dt>MaterialX</dt>
+      <dd>Standard opisu grafu materiału niezależny od wykonawcy; przenosi opis, nie gwarantuje identycznego obrazu.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Skoro to, jak liczone jest oświetlenie, decyduje o różnicy między podglądem a finałem, warto wiedzieć, na czym dokładnie polegają przybliżenia real-time'u. Następny rozdział jest katalogiem świadomych kłamstw o świetle — i wskazówką, kiedy widać każde z nich.</p>
   </div>
 
 <div class="site-nav chapter-nav">

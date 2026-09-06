@@ -28,9 +28,56 @@
   <h1>Wirtualna produkcja: LED, ICVFX i previz w silniku</h1>
   <p class="subtitle">Miejsce, w którym te dwie branże już się zderzyły na planie — i gdzie asset z gry musi wytrzymać spojrzenie kamery filmowej.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>W produkcji na ścianie LED obraz z silnika jest filmowany, więc staje się finalnym pikselem — ze wszystkimi przybliżeniami, które w podglądzie były akceptowalne.</li>
+      <li>Silnik renderuje w wysokiej jakości tylko ten fragment ściany, który widzi kamera, i musi to robić zsynchronizowany z jej migawką i pozycją.</li>
+      <li>Dla autora assetu zmienia się jedno, ale zasadniczo: asset musi wytrzymać spojrzenie prawdziwego obiektywu, a nie ekranu — a jednocześnie zmieścić się w budżecie klatki.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Wirtualna produkcja jest miejscem, w którym obie branże z tej książki już się spotkały i musiały się dogadać, bo alternatywą był brak ujęcia. Warto ją rozumieć, nawet nie pracując przy niej — bo to najbardziej bezlitosny test dla wszystkiego, co zostało dotąd powiedziane o parity, budżetach i jakości assetów.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Frustum kamery, reszta jako światło</h2>
+    <p>Ściana LED pokazuje dwie rzeczy naraz. W obszarze, który widzi kamera — <span class="term-violet">frustum</span> — wyświetlany jest obraz wyrenderowany dokładnie z jej perspektywy, z uwzględnieniem jej pozycji, ogniskowej i głębi ostrości; ten obszar wędruje po ścianie razem z ruchem kamery. Cała reszta ściany pokazuje to samo środowisko w gorszej jakości i pełni funkcję źródła światła oraz odbić na aktorach i rekwizytach.</p>
+    <p>To rozwiązanie ma dwie konsekwencje, których nie ma żaden inny sposób pracy. Po pierwsze: oświetlenie planu jest fizycznie tym samym oświetleniem co w scenie wirtualnej, więc problem dopasowania światła znika u źródła. Po drugie: aktor widzi, w czym gra, a operator kamery może improwizować — czego przy zielonym tle nie da się kupić za żadne pieniądze.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Twarde warunki</div>
+    <h2>Synchronizacja i to, czego kamera nie wybaczy</h2>
+    <ul class="compact">
+      <li><strong>Synchronizacja.</strong> Odświeżanie ściany, migawka kamery i renderowanie muszą być zgrane co do klatki; rozjazd daje pasy albo migotanie na materiale, którego nie da się później naprawić.</li>
+      <li><strong>Śledzenie kamery.</strong> Pozycja kamery musi być znana silnikowi z opóźnieniem liczonym w milisekundach — inaczej frustum nie nadąża i widać jego krawędź.</li>
+      <li><strong>Mora i głębia ostrości.</strong> Piksele ściany interferują z matrycą kamery; ratuje przed tym m.in. praca w rozmyciu, więc ściana bywa celowo poza ostrością. To z kolei ogranicza, jak daleko można odsunąć aktora.</li>
+      <li><strong>Barwa i zakres.</strong> Ściana ma swój profil i swoje ograniczenia jasności; cały łańcuch koloru z Rozdziału 21 musi się zgadzać, tylko że na końcu jest jeszcze diodowy panel i obiektyw.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co to znaczy dla assetu</div>
+    <h2>Dwa sprzeczne wymagania naraz</h2>
+    <p>Tu jest sedno rozdziału. Asset do wirtualnej produkcji musi spełnić jednocześnie oba wymagania, które w całej książce były rozdzielone: <span class="term-cyan">musi wytrzymać zbliżenie prawdziwego obiektywu</span>, bo trafia na materiał filmowy, i <span class="term-amber">musi zmieścić się w budżecie klatki</span>, bo renderuje się w czasie rzeczywistym.</p>
+    <p>W praktyce oznacza to, że wszystkie techniki z części o assetach przestają być zaleceniem, a stają się warunkiem wykonalności. Środowisko musi być zbudowane modularnie i instancjonowane, bo inaczej się nie zmieści. Musi mieć kontrolowane texel density, bo obiektyw wyłapie każdą niespójność. Musi mieć porządne LOD-y, bo kamera potrafi w ciągu jednego ujęcia przejść od szerokiego planu do zbliżenia. I musi być zwalidowane, bo nie ma czasu na naprawianie assetu, gdy stoi ekipa.</p>
+    <p>Dlatego wirtualna produkcja jest dobrym testem tej książki: zespół, który przeszedł przez rozdziały 4–16, jest do niej gotowy niemal w całości. Zespół, który tego nie zrobił, dowiaduje się o wszystkich zaległościach naraz, na planie, przy włączonym liczniku.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Frustum</dt>
+      <dd>Obszar ściany widziany przez kamerę, renderowany w pełnej jakości z jej perspektywy i przesuwający się wraz z nią.</dd>
+      <dt>Genlock</dt>
+      <dd>Synchronizacja odświeżania ściany, migawki kamery i renderowania do wspólnego zegara.</dd>
+      <dt>Śledzenie kamery</dt>
+      <dd>Ciągły pomiar pozycji i orientacji kamery przekazywany silnikowi w czasie rzeczywistym.</dd>
+      <dt>Mora</dt>
+      <dd>Interferencja siatki pikseli ściany z matrycą kamery, dająca wzór, którego nie ma w scenie.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Część o renderingu domknięta. Ostatnia część techniczna dotyczy tego, co dzieje się między publikacjami: danych, cache'u, generowania i sprawdzania — czyli infrastruktury, dzięki której wszystkie poprzednie techniki dają się w ogóle egzekwować.</p>
   </div>
 
 <div class="site-nav chapter-nav">

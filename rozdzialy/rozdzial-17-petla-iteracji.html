@@ -28,9 +28,79 @@
   <h1>Pętla iteracji: sekunda kontra noc</h1>
   <p class="subtitle">Największy zysk z real-time'u w VFX nie leży w finalnej klatce, tylko w liczbie decyzji, które da się podjąć przed lunchem.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Największa wartość real-time'u w VFX nie leży w finalnej klatce, tylko w liczbie decyzji, które da się podjąć w ciągu dnia.</li>
+      <li>Iteracja licząca sekundę i iteracja licząca czterdzieści minut to nie jest ta sama praca wykonana szybciej — to inna praca, bo przy sekundzie wolno próbować rzeczy, co do których nie ma się pewności.</li>
+      <li>Warunkiem, żeby to działało, jest zaufanie do podglądu: podgląd, który kłamie, jest gorszy od jego braku, bo produkuje decyzje, które trzeba potem cofnąć.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Załóżmy, że artysta lightingu ma dzień na ustawienie shotu. Przy iteracji czterdziestominutowej zmieści dziesięć, może dwanaście prób — i każda z nich musi być przemyślana, bo pomyłka kosztuje pół godziny. Przy iteracji sekundowej zmieści ich kilkaset i, co ważniejsze, może wśród nich zmieścić próby <em>głupie</em>: „a co, jeśli światło kluczowe przyjdzie z drugiej strony”. Większość z nich nic nie da. Jedna na trzydzieści okaże się lepsza od planu.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Mechanizm</div>
+    <h2>Krótka pętla zmienia to, co wolno sprawdzić</h2>
+    <p>To nie jest argument o wydajności, tylko o <span class="term-violet">koszcie pomyłki</span>. Kiedy sprawdzenie hipotezy kosztuje czterdzieści minut, sprawdza się wyłącznie hipotezy, w które się wierzy — czyli te, które wynikają z doświadczenia i przez to są przewidywalne. Kiedy kosztuje sekundę, opłaca się sprawdzać także te, w które się nie wierzy. Różnica w wyniku nie bierze się z liczby iteracji, tylko z tego, że przestrzeń przeszukiwania robi się szersza.</p>
+    <p>Dokładnie tego doświadczyli twórcy gier, gdy edytor zaczął pokazywać końcowy wygląd na bieżąco, i dokładnie to jest do przeniesienia. Nie „renderujmy filmy w silniku”, tylko <strong>skróćmy pętlę tam, gdzie zapadają decyzje</strong>.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Loop.compare</span><span>Jeden dzień pracy, dwie pętle</span></div>
+      <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+        <text x="20" y="26" font-family="IBM Plex Mono" font-size="10.5" fill="#4fc3c0">40 min na iterację · 8 h</text>
+        <g fill="#20242c" stroke="#4fc3c0" stroke-opacity="0.8">
+          <rect x="20" y="36" width="48" height="26" rx="3"/><rect x="74" y="36" width="48" height="26" rx="3"/>
+          <rect x="128" y="36" width="48" height="26" rx="3"/><rect x="182" y="36" width="48" height="26" rx="3"/>
+          <rect x="236" y="36" width="48" height="26" rx="3"/><rect x="290" y="36" width="48" height="26" rx="3"/>
+          <rect x="344" y="36" width="48" height="26" rx="3"/><rect x="398" y="36" width="48" height="26" rx="3"/>
+          <rect x="452" y="36" width="48" height="26" rx="3"/><rect x="506" y="36" width="48" height="26" rx="3"/>
+          <rect x="560" y="36" width="48" height="26" rx="3"/><rect x="614" y="36" width="48" height="26" rx="3"/>
+        </g>
+        <text x="20" y="82" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">12 prób — każda musi być przemyślana</text>
+
+        <text x="20" y="116" font-family="IBM Plex Mono" font-size="10.5" fill="#e8a33d">0,8 s na iterację · 8 h</text>
+        <g fill="#e8a33d" fill-opacity="0.5" stroke="none">
+          <rect x="20" y="126" width="642" height="10" rx="2"/>
+          <rect x="20" y="140" width="642" height="10" rx="2"/>
+          <rect x="20" y="154" width="642" height="10" rx="2"/>
+        </g>
+        <text x="20" y="184" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">setki prób — wśród nich takie, w które nikt nie wierzył</text>
+      </svg>
+      <div class="diagram-caption">Nie chodzi o to, że ta sama praca idzie szybciej. Chodzi o to, że wolno próbować czegoś innego.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Gdzie to wpiąć</div>
+    <h2>Cztery miejsca o różnym stopniu ryzyka</h2>
+    <ul class="compact">
+      <li><strong>Layout i previz.</strong> Najbezpieczniejsze i najlepiej udokumentowane zastosowanie: decyzje o kadrze, ruchu kamery i blokowaniu sceny nie wymagają wierności materiału. Tu real-time wygrywa bezdyskusyjnie i wygrał już dawno.</li>
+      <li><strong>Lookdev assetu.</strong> Bardzo opłacalne, ale wymaga parity (Rozdział 21) — bo tu ocenia się właśnie materiał. Podgląd, który pokazuje inny roughness niż finał, produkuje assety wymagające poprawki po pierwszym prawdziwym renderze.</li>
+      <li><strong>Wstępne rozstawienie świateł.</strong> Opłacalne pod warunkiem świadomości, czym różni się przybliżone GI od policzonego (Rozdział 19). Ustawienie kierunku i intensywności — tak. Ocena subtelnego odbicia światła od czerwonej ściany — niekoniecznie.</li>
+      <li><strong>Iteracja nad efektem i symulacją.</strong> Podgląd symulacji w niskiej rozdzielczości jest starą praktyką VFX; różnica polega na tym, że real-time pozwala go oglądać w kontekście oświetlonej sceny, a nie jako szare kule w pustce.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Koszt</div>
+    <h2>Drugi pipeline to prawdziwa cena</h2>
+    <p>Uczciwość wymaga wymienienia kosztu, bo prezentacje na konferencjach zwykle go pomijają. Podgląd w silniku to <span class="term-amber">druga ścieżka danych</span>: assety muszą do niego trafić w jego formacie, materiały muszą mieć swój odpowiednik, oświetlenie musi się zgadzać, a wszystko to musi nadążać za zmianami w wersji finalnej. Jeśli tę synchronizację robią ludzie, koszt zjada zysk w ciągu kilku tygodni.</p>
+    <p>Dlatego jedyny sensowny sposób wpięcia real-time'u prowadzi przez wspólne źródło — ten sam USD, ten sam config OCIO, te same opublikowane tekstury (Rozdział 3), z konwersją wykonywaną automatycznie przy publikacji. Podgląd budowany ręcznie obok pipeline'u jest demonstracją technologii, nie narzędziem produkcyjnym.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Pętla iteracji</dt>
+      <dd>Czas od zmiany parametru do zobaczenia jej skutku. Determinuje, jakie hipotezy opłaca się w ogóle sprawdzać.</dd>
+      <dt>Koszt pomyłki</dt>
+      <dd>Cena sprawdzenia hipotezy, która okaże się zła. Krótka pętla obniża go na tyle, że opłaca się próbować rzeczy nieoczywistych.</dd>
+      <dt>Previz</dt>
+      <dd>Wstępna wizualizacja ujęć służąca decyzjom o kadrze i ruchu, nie o wyglądzie materiału.</dd>
+      <dt>Druga ścieżka danych</dt>
+      <dd>Równoległy zestaw assetów i ustawień utrzymywany dla podglądu; główny koszt real-time'u w VFX.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Skoro podgląd i finał mają pokazywać to samo, materiał musi znaczyć to samo po obu stronach. Następny rozdział jest o tym, jak każda ze stron opisuje materiał — i dlaczego graf, który musi skompilować się do GPU, myśli inaczej niż graf, który może sobie pozwolić na pętlę.</p>
   </div>
 
 <div class="site-nav chapter-nav">

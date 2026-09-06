@@ -28,9 +28,56 @@
   <h1>Denoising, upscaling i motion vectors</h1>
   <p class="subtitle">Ta sama matematyka odszumia render z path tracera i dorabia klatki w grze — z jedną różnicą, która decyduje o tym, czy wolno jej użyć w shocie.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Odszumianie renderu i rekonstrukcja obrazu w grze rozwiązują ten sam problem: mało próbek, dużo pikseli, trzeba zgadnąć resztę wiarygodnie.</li>
+      <li>Obie strony korzystają z tych samych podpowiedzi — normalnych, albedo, głębi i wektorów ruchu — bo bez nich algorytm nie odróżnia szumu od detalu.</li>
+      <li>Różnica jest jedna i decyduje o dopuszczalności: technika temporalna miesza klatki ze sobą, a w VFX klatka musi dać się ocenić i poprawić osobno.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Path tracer zbiera sto próbek na piksel i dostaje obraz z szumem. Gra rysuje obraz w połowie rozdzielczości i musi dostarczyć pełną. Oba te zadania są tym samym zadaniem: mając niepełną informację, odtworzyć obraz, który wygląda jak policzony w całości. Nie dziwi więc, że rozwiązania po obu stronach zbiegły się do bardzo podobnej postaci.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wspólny mechanizm</div>
+    <h2>Odszumianie prowadzone danymi</h2>
+    <p>Naiwne rozmycie usuwa szum razem z detalem. Dlatego wszystkie używane w praktyce metody dostają dodatkowe warstwy opisujące <em>co</em> jest na obrazie: mapę normalnych, albedo (kolor powierzchni bez oświetlenia), głębię i identyfikator obiektu. Algorytm może wtedy uśredniać agresywnie tam, gdzie to ta sama powierzchnia w tym samym materiale, a nie uśredniać wcale w poprzek krawędzi.</p>
+    <p>Warto zauważyć, jak silnie to spina się z resztą książki: te warstwy pomocnicze to dokładnie te same AOV, których kompozytor używa od dekad, i ta sama rodzina danych co mapy pomocnicze z bakingu (Rozdział 16). Odszumianie nie jest magią — jest dobrze poprowadzonym uśrednianiem, któremu ktoś powiedział, gdzie wolno.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Wektory ruchu</div>
+    <h2>Podpowiedź, bez której nie ma temporalności</h2>
+    <p><span class="term-violet">Wektor ruchu</span> mówi dla każdego piksela, gdzie ta sama część sceny znajdowała się w poprzedniej klatce. To jedna dana, na której stoi cała rekonstrukcja temporalna: bez niej nie da się sensownie zebrać informacji z poprzednich klatek, bo nie wiadomo, co z czym zestawiać.</p>
+    <p>W VFX ta sama warstwa istnieje od zawsze pod nazwą motion vector i służy do rozmycia ruchu w kompozycji. To jeden z ładniejszych przykładów zbieżności: obie branże potrzebowały dokładnie tej samej danej z zupełnie innych powodów. Praktyczna konsekwencja jest taka, że pipeline VFX <em>już</em> ją produkuje — więc koszt wejścia w techniki temporalne jest niższy, niż się wydaje. Dodatek K rozkłada reprojekcję i ghosting dokładniej.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Granica</div>
+    <h2>Czego nie wolno wnieść do shotu</h2>
+    <p>Odszumianie pojedynczej klatki jest w VFX standardem i nikogo nie dziwi — każdy renderer ma dziś denoiser prowadzony warstwami pomocniczymi. Kontrowersja zaczyna się przy technikach <span class="term-amber">temporalnych</span>, i to z konkretnego, produkcyjnego powodu.</p>
+    <ul class="compact">
+      <li><strong>Klatka przestaje być niezależna.</strong> Jeśli klatka 47 zawiera informację z klatek 44–46, to poprawka w klatce 45 zmienia klatkę 47. W pipelinie, w którym klatki renderuje się równolegle na farmie i dorenderowuje pojedyncze po poprawce, jest to poważny problem organizacyjny, nie estetyczny.</li>
+      <li><strong>Artefakty są ruchome.</strong> Smużenie i duchy pojawiają się tylko w ruchu, więc nie wyłapie ich przegląd pojedynczych klatek — a wyłapie je projekcja przed klientem.</li>
+      <li><strong>Trudno je kontrolować lokalnie.</strong> Kompozytor może poprawić piksel; nie może poprawić „sposobu, w jaki ten piksel został zebrany z czterech klatek”.</li>
+    </ul>
+    <p>Stąd praktyczna reguła: <strong>odszumianie przestrzenne — tak, temporalne — tylko świadomie i najlepiej nie na finalnej warstwie</strong>. To jest dokładnie ten przypadek, dla którego filtr z Rozdziału 2 ma trzecie pytanie: technika oszczędza matematykę, koszt płaci się przy każdej klatce, a jej artefakty ujawniają się dopiero w ruchu, czyli tam, gdzie ogląda je widz.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Denoiser</dt>
+      <dd>Algorytm usuwający szum próbkowania, prowadzony warstwami pomocniczymi: normalnymi, albedo, głębią.</dd>
+      <dt>AOV</dt>
+      <dd>Dodatkowa warstwa wyjściowa renderu niosąca informację inną niż finalny kolor.</dd>
+      <dt>Wektor ruchu</dt>
+      <dd>Przesunięcie tej samej części sceny między klatkami; podstawa rekonstrukcji temporalnej i rozmycia ruchu.</dd>
+      <dt>Rekonstrukcja temporalna</dt>
+      <dd>Zbudowanie klatki z informacji rozłożonej na wiele klatek. Łamie niezależność klatki od klatki.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Wiemy już, czym podgląd różni się od finału i dlaczego. Następny rozdział jest o tym, jak te dwa obrazy do siebie dopiąć na tyle, żeby decyzje podjęte na jednym z nich obowiązywały na drugim.</p>
   </div>
 
 <div class="site-nav chapter-nav">

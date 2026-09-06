@@ -28,9 +28,64 @@
   <h1>Proceduralność: Houdini, PDG i generowanie zamiast modelowania</h1>
   <p class="subtitle">Jedyny obszar, w którym ruch idzie w drugą stronę — to VFX nauczyło gamedev, że asset może być przepisem, nie plikiem.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Asset proceduralny to przepis, nie plik: zestaw reguł z parametrami, z którego generuje się konkretną instancję wtedy, gdy jest potrzebna.</li>
+      <li>To jedyny rozdział, w którym kierunek przepływu jest odwrotny — Houdini i myślenie proceduralne przyszły do gamedevu z VFX, a wróciły z dyscypliną pakowania w narzędzia dla nietechnicznych użytkowników.</li>
+      <li>Graf zadań (PDG/TOPs) dokłada do tego to, czego brakowało: równoległe generowanie wielu wariantów z przeliczaniem wyłącznie tego, co się zmieniło.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Poprzednie rozdziały traktowały asset jak rzecz: plik, który powstaje, jest publikowany i wersjonowany. Podejście proceduralne kwestionuje to założenie — asset jest funkcją, a plik tylko jednym z jej wyników, wygenerowanym z konkretnymi argumentami.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Zysk</div>
+    <h2>Zmiana nie kosztuje przemodelowania</h2>
+    <p>Wartość jest ta sama co przy modularności (Rozdział 7), tylko mocniejsza: <span class="term-violet">notatka nie wymaga ponownej pracy, tylko zmiany parametru</span>. „Ten mur ma być dwa razy dłuższy i bardziej zniszczony” to dwa suwaki, a nie dwa dni. Ta obietnica jest kusząca i dlatego warto od razu wskazać, gdzie się załamuje: budowa dobrego generatora kosztuje kilka razy więcej niż zbudowanie jednego assetu ręcznie. Opłaca się, gdy wariantów jest wiele albo gdy zmiana jest pewna — a nie opłaca się dla rekwizytu z jednego shotu.</p>
+    <p>Praktyczny sposób podjęcia tej decyzji: policz, ile razy ten asset zostanie zmieniony po zatwierdzeniu. Przy zerze rób ręcznie. Przy trzech i więcej — proceduralnie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co gamedev dołożył</div>
+    <h2>Opakowanie dla nietechnicznego użytkownika</h2>
+    <p>Proceduralne budowanie geometrii jest w VFX stare. Rzecz, którą warto przenieść z powrotem, to sposób dostarczania go ludziom, którzy nie zaglądają do środka: <span class="term-amber">gotowy węzeł z kilkoma zrozumiałymi parametrami</span>, wersjonowany jak każdy inny asset, działający w cudzej scenie bez pytania autora o pomoc.</p>
+    <p>Różnica między „mam plik Houdiniego, który to generuje” a „w bibliotece jest narzędzie <code>rock_generator</code> z suwakiem chropowatości” to różnica między pracą jednej osoby a możliwością pracy całego zespołu. Gamedev wymusił tę dyscyplinę wcześniej, bo tam narzędzie musi trafić do dziesiątek level designerów.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Graf zadań</div>
+    <h2>Przeliczać tylko to, co się zmieniło</h2>
+    <p>Generowanie dwustu wariantów assetu to nie jest jedna operacja, tylko dwieście niezależnych zadań, z których każde ma swoje wejścia i wyjścia. Opisanie tego <span class="term-violet">grafem zadań</span> daje trzy rzeczy naraz: zadania wykonują się równolegle na wielu rdzeniach lub na farmie; po zmianie jednego parametru przeliczają się wyłącznie te, na które on wpływa; a cała procedura jest zapisana, więc powtarzalna.</p>
+    <p>To jest dokładnie ta sama idea, co cache adresowany treścią z poprzedniego rozdziału i co graf zależności w klasycznym pipelinie, tylko zastosowana do wytwarzania assetów zamiast do ich publikacji. Dodatek M pokazuje ją na konkretnym przykładzie.</p>
+    <div class="worked">
+      generowanie 240 wariantów skały<br><br>
+      naiwnie, sekwencyjnie:              240 × 40 s  =  ~2,7 h<br>
+      graf zadań, 32 równoległe procesy:              =  ~5 min<br>
+      po zmianie jednego parametru materiału:<br>
+      przeliczane tylko zadania zależne   18 z 240    =  ~25 s
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Granica</div>
+    <h2>Czego proceduralnie nie warto</h2>
+    <p>Wszystko, czego wartością jest konkretność. Bohater, którego sylwetka została zaprojektowana; rekwizyt niosący punkt fabularny; powierzchnia skanowana dlatego, że ma być prawdziwa. Generator wyprodukuje tam wynik poprawny i pozbawiony intencji — a intencja jest zwykle powodem, dla którego ten asset w ogóle istnieje.</p>
+    <p>Rozsądny podział jest znów ten sam co przy budżecie: proceduralnie to, czego jest dużo i na co nikt nie patrzy z osobna; ręcznie to, na co patrzy kamera.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Asset proceduralny</dt>
+      <dd>Zestaw reguł z parametrami, z którego generuje się konkretne wystąpienie; plik jest wynikiem, nie źródłem.</dd>
+      <dt>Narzędzie opakowane</dt>
+      <dd>Generator udostępniony jako wersjonowany węzeł z prostymi parametrami, działający bez udziału autora.</dd>
+      <dt>Graf zadań</dt>
+      <dd>Opis wytwarzania jako sieci zadań z zależnościami; umożliwia równoległość i przeliczanie wyłącznie zmienionego.</dd>
+      <dt>Wariant</dt>
+      <dd>Jedno wystąpienie assetu proceduralnego, odpowiadające konkretnemu zestawowi parametrów.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Skoro assety generują się automatycznie, a cache przelicza się sam, brakuje ostatniego elementu: mechanizmu, który sprawdza, czy to, co wychodzi, nadaje się do użycia. Następny rozdział jest o testach dla plików.</p>
   </div>
 
 <div class="site-nav chapter-nav">

@@ -28,9 +28,72 @@
   <h1>Walidacja automatyczna: CI dla assetów</h1>
   <p class="subtitle">Skoro maszyna potrafi sprawdzić, czy kod się kompiluje, potrafi też sprawdzić, czy asset ma pivot w zerze i nienachodzące UV.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Walidacja to zestaw automatycznych sprawdzeń uruchamianych przy publikacji assetu — dokładny odpowiednik testów, które programiści uruchamiają przy każdej zmianie kodu.</li>
+      <li>Sprawdza się rzeczy obiektywne: skalę, pivot, nazwy, nienachodzące UV, brak zdegenerowanych trójkątów, obecność wymaganych map. Nigdy gust.</li>
+      <li>Kluczowa jest reakcja na wynik: część testów blokuje publikację, część tylko ostrzega, a każdy komunikat musi mówić, jak to naprawić — inaczej system zostanie obejściony.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Rozdział 9 wyliczył, co asset powinien spełniać. Ten rozdział jest o tym, dlaczego lista wymagań, której nikt nie sprawdza, po miesiącu przestaje obowiązywać — i co zrobić, żeby sprawdzała się sama.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Analogia</div>
+    <h2>To są testy jednostkowe, tylko dla plików</h2>
+    <p>Programista nie sprawdza ręcznie, czy kod się kompiluje — robi to maszyna, przy każdej zmianie, zanim zmiana trafi do wspólnej gałęzi. Asset jest w tej analogii dokładnie tym samym: artefaktem, który albo spełnia kontrakt, albo nie, i o którym da się to rozstrzygnąć bez udziału człowieka.</p>
+    <p>Gamedev zbudował to wcześniej, bo miał twardszy przymus: asset niespełniający wymagań nie tyle wygląda źle, co uniemożliwia zbudowanie gry. VFX ma ten sam problem rozłożony w czasie i przez to mniej widoczny — asset ze złą skalą nie zatrzymuje niczego dziś, tylko psuje symulację za trzy tygodnie.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Co sprawdzać</div>
+    <h2>Tylko rzeczy rozstrzygalne</h2>
+    <p>Reguła doboru testów jest jedna: <span class="term-violet">sprawdzamy wyłącznie to, co da się rozstrzygnąć bez opinii</span>. Test „czy ten materiał wygląda dobrze” nie ma prawa istnieć; test „czy mapa roughness jest zapisana jako dane liniowe” — jak najbardziej.</p>
+    <ul class="compact">
+      <li><strong>Nazewnictwo i struktura:</strong> zgodność ze wzorcem, brak nieużywanych materiałów, jeden obiekt tam, gdzie ma być jeden.</li>
+      <li><strong>Transformacje:</strong> skala 1,0, wypalone przekształcenia, pivot w uzgodnionym miejscu, orientacja zgodna z konwencją.</li>
+      <li><strong>Geometria:</strong> brak trójkątów o zerowej powierzchni i zdublowanych wierzchołków, spójne normalne, brak n-gonów w obszarach deformowanych.</li>
+      <li><strong>UV:</strong> nienachodzące wysepki tam, gdzie mają być nienachodzące, margines nie mniejszy niż wymagany, obecność drugiego kanału, jeśli pipeline go oczekuje.</li>
+      <li><strong>Tekstury:</strong> komplet wymaganych map, rozdzielczości będące potęgami dwójki, poprawna przestrzeń kolorów każdej mapy, texel density w uzgodnionym zakresie (Rozdział 6).</li>
+      <li><strong>Budżet:</strong> liczba trójkątów i sumaryczna waga tekstur wobec przydziału dla tej klasy assetu (Rozdział 4).</li>
+    </ul>
+    <p>Dodatek N zawiera tę listę w formie gotowej do wpięcia, z uzasadnieniem każdego testu — bo test bez uzasadnienia jest pierwszym, który ktoś wyłączy.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Reakcja</div>
+    <h2>Trzy poziomy, nie dwa</h2>
+    <p>System, który na każde odstępstwo odpowiada zablokowaniem publikacji, zostanie obejściony w ciągu tygodnia — bo produkcja filmowa regularnie potrzebuje opublikować coś niedoskonałego o 23:00. Dlatego wyniki dzieli się na trzy poziomy:</p>
+    <div class="worked">
+      BŁĄD      → publikacja zablokowana<br>
+                  (zła skala, brak wymaganej mapy, nachodzące UV przy wypalaniu)<br><br>
+      OSTRZEŻENIE → publikacja przechodzi, wpis trafia do raportu<br>
+                  (przekroczony budżet, texel density poza zakresem)<br><br>
+      INFORMACJA → tylko odnotowane<br>
+                  (liczba materiałów, waga, czas przetwarzania — do statystyk)
+    </div>
+    <p>I warunek, bez którego całość nie działa: <strong>komunikat musi mówić, co jest źle, gdzie i jak to naprawić</strong>. „Walidacja nie powiodła się (kod 7)” to komunikat, który generuje wiadomość na czacie do pipeline'u zamiast poprawki. „Obiekt <code>prop_crate_A</code> ma skalę 0,01 — wypal transformacje (Freeze Transformations) i opublikuj ponownie” to komunikat, który generuje poprawkę.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Furtka</div>
+    <h2>Świadome przekroczenie, nie wyłączenie</h2>
+    <p>Blokada musi mieć jawną drogę obejścia dla przypadków uzasadnionych — z podaniem powodu i zapisaniem, kto ją zastosował. To nie jest osłabienie systemu, tylko warunek jego przetrwania: furtka, której nie ma w systemie, i tak powstanie obok niego, tylko bez śladu. Ta sama zasada co przy budżecie z Rozdziału 4, z tego samego powodu.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Walidacja</dt>
+      <dd>Automatyczne sprawdzenie assetu przy publikacji pod kątem obiektywnych, rozstrzygalnych wymagań.</dd>
+      <dt>Test rozstrzygalny</dt>
+      <dd>Sprawdzenie o jednoznacznej odpowiedzi, niezależnej od opinii oceniającego.</dd>
+      <dt>Poziomy wyniku</dt>
+      <dd>Podział na błąd blokujący, ostrzeżenie i informację; bez tego podziału system jest albo obchodzony, albo ignorowany.</dd>
+      <dt>Furtka</dt>
+      <dd>Jawna, odnotowana droga świadomego przekroczenia reguły.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Ostatni rozdział tej części dotyczy assetów, których nikt w studiu nie zrobił: kupionych, zeskanowanych i wygenerowanych — oraz tego, dlaczego gamedev przestał traktować je jak oszustwo wcześniej niż VFX.</p>
   </div>
 
 <div class="site-nav chapter-nav">

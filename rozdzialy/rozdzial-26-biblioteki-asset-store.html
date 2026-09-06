@@ -28,9 +28,59 @@
   <h1>Biblioteki i asset store'y: kupione, skanowane, wygenerowane</h1>
   <p class="subtitle">Gamedev dawno przestał traktować gotowy asset jak oszustwo. VFX robi to samo od lat, tylko rzadziej się do tego przyznaje.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Gotowy asset — kupiony, zeskanowany, wygenerowany — nie jest skrótem zamiast pracy, tylko innym punktem startu tej samej pracy.</li>
+      <li>Koszt nie znika, tylko przesuwa się z modelowania na obróbkę: retopologię, uporządkowanie UV, dopasowanie do trim sheetu, sprawdzenie skali i licencji.</li>
+      <li>Biblioteka wewnętrzna — wersjonowana, opisana, przeszukiwalna — jest wartościowsza od dowolnego kupionego pakietu, bo rośnie z każdą produkcją.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>W gamedevie kupowanie assetów przestało być tematem wstydliwym mniej więcej wtedy, gdy okazało się, że gracz nie wie i nie ma jak wiedzieć, a czas zaoszczędzony na skrzyniach idzie na rzeczy, które widać. VFX przechodzi tę samą drogę, tylko ciszej — biblioteki skanów są w powszechnym użyciu, a mimo to rzadko rozmawia się o nich jak o elemencie pipeline'u.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Trzy źródła</div>
+    <h2>Każde z innym profilem kosztu</h2>
+    <ul class="compact">
+      <li><strong>Kupione.</strong> Najtańsze na wejściu, najbardziej nierówne jakościowo. Prawie zawsze wymagają przerobienia pod konwencje studia — bo powstały pod cudze. Bywają zbudowane dobrze i bywają zbudowane tak, że przeróbka kosztuje więcej niż zrobienie od zera; ocena tego zajmuje kwadrans i warto ją zrobić przed, nie po.</li>
+      <li><strong>Zeskanowane.</strong> Najwierniejsze i najcięższe. Dają wiarygodność, której nie da się zamodelować, a wymagają pełnej ścieżki obróbki: czyszczenia, retopologii albo wirtualizacji (Rozdział 13), odseparowania oświetlenia z tekstury i sprowadzenia do skali.</li>
+      <li><strong>Wygenerowane.</strong> Najtańsze w wariantach, najsłabsze w intencji (Rozdział 24). Dobre na wypełnienie, słabe na cokolwiek, co ma coś znaczyć.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Obróbka</div>
+    <h2>Gdzie naprawdę idzie czas</h2>
+    <p>Największym nieporozumieniem wokół gotowych assetów jest liczenie oszczędności jako całego czasu modelowania. Realny rachunek wygląda inaczej: znika modelowanie, zostaje wszystko pozostałe. Skan skały trzeba zamknąć w budżecie, dopasować mu texel density do reszty setu, zdjąć z jego tekstury światło, w którym był fotografowany, sprawdzić skalę i nadać nazwę zgodną z konwencją. To jest praca na godziny, nie na minuty — ale wciąż mniej niż tydzień rzeźbienia, a wynik jest wiarygodniejszy.</p>
+    <p>Dlatego assety zewnętrzne opłacają się dokładnie w tych pipeline'ach, które mają zautomatyzowaną obróbkę i walidację (Rozdział 25). Bez nich każdy kupiony pakiet jest wnoszeniem cudzych konwencji do własnego repozytorium — i to jest ten przypadek, w którym „oszczędność” bywa ujemna.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Licencja</div>
+    <h2>Jedyna rzecz nie do naprawienia później</h2>
+    <p>Wszystko powyżej da się poprawić po fakcie. Licencji nie. Warto zapisywać przy assecie jego pochodzenie i warunki użycia w tym samym miejscu, w którym trzyma się jego wersje — bo pytanie „czy wolno nam tego użyć w reklamie, która ma iść w telewizji” przychodzi zawsze i zawsze późno, a odpowiedź „chyba tak, ktoś to pobrał w zeszłym roku” nie jest odpowiedzią. Metadane o licencji to pole, które kosztuje jedną linię w schemacie publikacji i oszczędza rozmowę z prawnikami.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Biblioteka własna</div>
+    <h2>Najbardziej niedoceniany asset studia</h2>
+    <p>Najcenniejszym zbiorem nie jest ten kupiony, tylko ten, który studio zrobiło samo przez ostatnie pięć produkcji — pod warunkiem, że da się w nim cokolwiek znaleźć. Warunki są prozaiczne i pokrywają się z całą resztą tej książki: spójne nazewnictwo, opisane metadane, jednolita skala i konwencje, wersjonowanie, podgląd.</p>
+    <p>Studio, które to ma, zaczyna każdą produkcję z przewagą rosnącą w czasie. Studio, które tego nie ma, co produkcję zaczyna od zera — i, co gorsza, zwykle nie wie, że ma pięć tysięcy gotowych assetów, tylko nie potrafi ich znaleźć.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Obróbka (conditioning)</dt>
+      <dd>Sprowadzenie zewnętrznego assetu do konwencji studia: skala, nazwy, UV, budżet, rozdzielczości map.</dd>
+      <dt>Odseparowanie oświetlenia</dt>
+      <dd>Usunięcie z tekstury skanu światła, w którym powstał, żeby dała się oświetlić na nowo.</dd>
+      <dt>Metadane licencji</dt>
+      <dd>Zapisane przy assecie źródło i warunki użycia; jedyna cecha, której nie da się naprawić po fakcie.</dd>
+      <dt>Biblioteka wewnętrzna</dt>
+      <dd>Wersjonowany, opisany i przeszukiwalny zbiór własnych assetów; przewaga rosnąca z każdą produkcją.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Zostały dwa rozdziały. Pierwszy jest tym, bez którego cała książka byłaby nieuczciwa: listą rzeczy, które w grze są cnotą, a w shocie kosztownym błędem.</p>
   </div>
 
 <div class="site-nav chapter-nav">

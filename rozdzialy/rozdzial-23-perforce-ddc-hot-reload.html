@@ -28,9 +28,62 @@
   <h1>Perforce, DDC i hot reload</h1>
   <p class="subtitle">Gra buduje się kilkanaście razy dziennie, więc cache i przeładowanie w locie nie są luksusem, tylko warunkiem pracy. VFX dopiero się tego uczy.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Gra buduje się kilkanaście razy dziennie, więc gamedev musiał rozwiązać dwa problemy, które VFX rozwiązuje rzadziej: jak nie przeliczać tego, co się nie zmieniło, i jak podmienić asset bez restartu.</li>
+      <li>Cache wyników pochodnych (DDC) trzyma przetworzone wersje assetów pod adresem wyliczonym z zawartości źródła — zmiana źródła unieważnia wpis automatycznie, bez pilnowania.</li>
+      <li>VFX ma odpowiednik w publikacji i cache'ach, ale zwykle nie ma dwóch rzeczy: adresowania treścią i współdzielenia cache'u między ludźmi.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Ten rozdział dotyczy infrastruktury, która sama nie produkuje żadnego piksela, a decyduje o tym, ile razy dziennie da się sprawdzić efekt zmiany. Ponieważ poprzednie rozdziały opierały cały argument na skróceniu pętli, warto wiedzieć, co ją naprawdę wydłuża — a to rzadko jest render.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Adresowanie treścią</div>
+    <h2>Klucz wyliczony z zawartości, nie nazwa</h2>
+    <p>Silniki gier trzymają przetworzone wersje assetów — skompresowane tekstury, zbudowane siatki, skompilowane shadery — w <span class="term-amber">cache'u wyników pochodnych</span>. Kluczem nie jest nazwa pliku, tylko skrót policzony z zawartości źródła i z parametrów przetwarzania. Konsekwencje są dokładnie te, których się chce:</p>
+    <ul class="compact">
+      <li>zmiana źródła zmienia klucz, więc stary wpis przestaje pasować sam z siebie — nikt nie musi pamiętać o unieważnianiu,</li>
+      <li>powrót do poprzedniej wersji trafia w istniejący wpis, więc kosztuje zero,</li>
+      <li>cache da się współdzielić: jeśli ktoś w zespole już przeliczył tę teksturę z tymi ustawieniami, reszta pobiera wynik zamiast liczyć.</li>
+    </ul>
+    <p>Ten ostatni punkt jest najmocniejszym argumentem i najrzadziej spotykany w VFX. Studio, w którym każdy artysta lokalnie konwertuje te same tekstury do formatu renderera, wykonuje tę samą pracę tyle razy, ile ma stanowisk.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Publish kontra cache</div>
+    <h2>Dwa różne mechanizmy, często mylone</h2>
+    <p>VFX ma publikację — zatwierdzoną, wersjonowaną, niezmienną wersję assetu — i jest to mechanizm lepszy od cache'u tam, gdzie chodzi o odpowiedzialność i o to, co widzi następny dział. Nie zastępuje jednak cache'u, bo odpowiada na inne pytanie.</p>
+    <p><span class="term-cyan">Publikacja</span> mówi: „to jest wersja, na której możesz polegać”. <span class="term-amber">Cache</span> mówi: „to już zostało policzone, nie licz drugi raz”. Publikacja jest decyzją człowieka, cache jest konsekwencją zawartości. Dojrzały pipeline ma oba: publikuje się rzadko i świadomie, a cache'uje się wszystko, co jest deterministyczną funkcją czegoś, co już istnieje — konwersje tekstur, proxy, wypalone mapy, cache symulacji, skompilowane shadery.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Hot reload</div>
+    <h2>Podmiana bez restartu</h2>
+    <p>Druga rzecz, którą gamedev musiał rozwiązać, to podmiana assetu w działającej scenie. W silniku jest to oczywistość: zapisujesz teksturę, po sekundzie widzisz ją w edytorze. W VFX odpowiednikiem bywa ponowne otwarcie sceny — operacja liczona w minutach przy dużym środowisku, powtarzana kilkadziesiąt razy dziennie.</p>
+    <p>Realna droga do tego w pipelinie filmowym prowadzi przez warstwową kompozycję sceny: skoro scena jest złożeniem warstw, a nie jednym plikiem, podmiana jednej warstwy nie wymaga przebudowy całości. To jest jedna z tych rzeczy, które USD umożliwia, a niewiele pipeline'ów faktycznie wykorzystuje — bo wymaga to zaprojektowania sceny jako złożenia od początku, a nie potraktowania USD jako lepszego formatu eksportu.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Perforce</div>
+    <h2>Uwaga o narzędziu, którego nie trzeba przenosić</h2>
+    <p>Perforce bywa wymieniany jako „patent z gamedevu”, ale w tym przypadku transfer już się dokonał w drugą stronę: studia VFX używają go od dawna, a te, które używają czegoś innego, mają zwykle dobre powody. Wartościowe jest natomiast to, co gamedev robi <em>wokół</em> systemu wersji: pilnowanie, żeby główna gałąź zawsze była w stanie zdatnym do uruchomienia, i traktowanie zepsucia jej jako zdarzenia, które zatrzymuje pracę zespołu do czasu naprawy.</p>
+    <p>Przełożenie na VFX jest bezpośrednie: opublikowana wersja assetu, która psuje sceny wszystkim innym, powinna być cofana natychmiast, a nie naprawiana przez każdy dział u siebie. Rozdział 25 pokazuje mechanizm, który do tego nie dopuszcza.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Cache wyników pochodnych (DDC)</dt>
+      <dd>Pamięć przetworzonych wersji assetów adresowana skrótem z zawartości źródła i parametrów przetwarzania.</dd>
+      <dt>Adresowanie treścią</dt>
+      <dd>Wyliczanie klucza z zawartości, dzięki czemu zmiana źródła unieważnia wpis automatycznie.</dd>
+      <dt>Hot reload</dt>
+      <dd>Podmiana assetu w działającej scenie bez jej ponownego wczytywania.</dd>
+      <dt>Publikacja</dt>
+      <dd>Świadoma, wersjonowana decyzja człowieka o tym, co widzi następny dział — uzupełnienie cache'u, nie jego zamiennik.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Cache oszczędza liczenie tego, co już policzone. Następny rozdział dotyczy techniki, która idzie dalej i pozwala nie mieć assetu wcale, dopóki nie jest potrzebny — a przy okazji jest jedynym obszarem w tej książce, w którym ruch odbywał się głównie z VFX do gier.</p>
   </div>
 
 <div class="site-nav chapter-nav">

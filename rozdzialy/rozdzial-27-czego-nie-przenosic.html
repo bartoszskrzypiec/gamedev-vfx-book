@@ -28,9 +28,67 @@
   <h1>Czego nie przenosić z gamedevu</h1>
   <p class="subtitle">Lista rzeczy, które w grze są cnotą, a w shocie kosztownym błędem — bo książka o przenoszeniu patentów bez tego rozdziału byłaby nieuczciwa.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Dziewięć rzeczy, które w produkcji gier są słuszne, a w shocie filmowym kosztują więcej, niż dają — z podaniem, co dokładnie je unieważnia.</li>
+      <li>Wspólny mianownik: gra kontroluje warunki oglądania, film nie. Wszystko, co zakłada dystans, kadr albo ruch kamery, traci w filmie założenie.</li>
+      <li>Drugi wspólny mianownik: gra optymalizuje pod koszt runtime, film pod czas ludzi. Technika kupująca milisekundy kosztem godzin pracy jest w VFX stratą.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Książka o przenoszeniu patentów bez tego rozdziału byłaby ulotką reklamową. Poniższa lista nie jest zbiorem wad gamedevu — każda z tych rzeczy jest tam poprawną odpowiedzią na realne ograniczenie. Wszystkie tracą sens dopiero wtedy, gdy ograniczenie znika, a pojawia się inne.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Grupa pierwsza</div>
+    <h2>Wszystko, co zakłada kontrolę nad kamerą</h2>
+    <ul class="compact">
+      <li><strong>Detal wyłącznie w mapie normalnych.</strong> W grze świetny stosunek jakości do kosztu. W filmie zdradza się na sylwetce i w odbiciu przy pierwszym zbliżeniu — a zbliżenie zawsze przychodzi (Rozdział 13).</li>
+      <li><strong>Progi LOD dostrojone „na oko” z tolerancją na popping.</strong> Gracz nie patrzy, widz patrzy, a montaż zatrzymuje obraz. Przeniesienie kaskady owszem, przeniesienie tolerancji — nie (Rozdział 10).</li>
+      <li><strong>Impostery w strefie ostrości.</strong> Głębia ostrości ujawnia płaskość natychmiast, bo prawdziwy obiekt rozmywa się różnie na różnych głębokościach (Rozdział 11).</li>
+      <li><strong>Efekty ekranowe jako źródło finalnego obrazu.</strong> Odbicia i zasłonięcie liczone z tego, co widać na ekranie, znikają, gdy źródło wychodzi poza kadr — a w filmie kamera jeździ i regularnie je wyprowadza.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Grupa druga</div>
+    <h2>Wszystko, co łamie niezależność klatki</h2>
+    <ul class="compact">
+      <li><strong>Look zbudowany na akumulacji temporalnej.</strong> Klatka przestaje dać się ocenić i dorenderować osobno, co rozbija sposób pracy farmy i kompozycji (Rozdział 20).</li>
+      <li><strong>Wypalone oświetlenie dla czegokolwiek, co się rusza.</strong> W grze podstawa wydajności statycznych scen; w filmie prawie wszystko jest ruchome, łącznie z kamerą, a poprawka oświetlenia po review nie może oznaczać ponownego wypalania środowiska.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Grupa trzecia</div>
+    <h2>Wszystko, co kupuje milisekundy za godziny</h2>
+    <ul class="compact">
+      <li><strong>Kompresja blokowa w drodze do renderu.</strong> Rozwiązuje problem pamięci GPU, którego render na CPU nie ma, a wprowadza nieodwracalną stratę (Rozdział 15).</li>
+      <li><strong>Agresywna optymalizacja assetów tłowych, których nikt nie policzył.</strong> Tydzień pracy nad assetem zajmującym 2% kadru jest w filmie stratą niezależnie od tego, jak elegancki jest wynik. Budżet z Rozdziału 4 istnieje po to, żeby wiedzieć, gdzie ta granica przebiega.</li>
+      <li><strong>Sztywny budżet bez furtki.</strong> Egzekwowany bezwyjątkowo w produkcji filmowej wymusza albo obchodzenie systemu, albo gorsze shoty. Budżet ma być narzędziem rozmowy, nie regulaminem.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Reguła ogólna</div>
+    <h2>Co naprawdę odróżnia te dwa światy</h2>
+    <p>Wszystkie dziewięć pozycji da się sprowadzić do dwóch zdań, które warto zapamiętać zamiast listy.</p>
+    <p><strong>Po pierwsze: gra kontroluje warunki oglądania, film nie.</strong> Każda technika, której poprawność zależy od tego, gdzie stoi kamera, jak szybko się porusza i jak długo widz patrzy, w filmie traci gwarancję. Wolno jej użyć — pod warunkiem sprawdzenia założenia dla konkretnego ujęcia, a nie raz dla całej produkcji.</p>
+    <p><strong>Po drugie: gra optymalizuje koszt runtime, film koszt ludzi.</strong> W grze milisekunda mnoży się przez miliardy klatek, więc warto za nią zapłacić tygodniem pracy. W filmie render jest skończony, a tydzień pracy nie wraca. Odwrócenie tej proporcji jest najczęstszym błędem entuzjastów przenoszenia — i tłumaczy, dlaczego techniki assetowe z tej książki przenoszą się tak dobrze, a renderingowe wymagają uzasadnienia za każdym razem.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Efekt ekranowy</dt>
+      <dd>Technika licząca zjawisko wyłącznie z informacji widocznej w kadrze; zawodzi, gdy źródło wychodzi poza ekran.</dd>
+      <dt>Niezależność klatki</dt>
+      <dd>Własność, dzięki której klatkę da się wyrenderować, ocenić i poprawić osobno. Warunek pracy farmy i kompozycji.</dd>
+      <dt>Wypalone oświetlenie</dt>
+      <dd>Oświetlenie policzone z góry i zapisane w teksturach lub danych wierzchołków; tanie i nieruchome.</dd>
+      <dt>Koszt ludzi</dt>
+      <dd>Czas artystów — w produkcji filmowej najdroższy i niezwracalny zasób, wobec którego mierzy się każdą optymalizację.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>Zostało domknięcie. Ostatni rozdział prowadzi jeden rekwizyt przez wszystkie patenty z tej książki — od skanu, przez trim sheet, budżet i LOD-y, po finalną klatkę — żeby pokazać je nie jako listę technik, tylko jako jeden ciąg decyzji.</p>
   </div>
 
 <div class="site-nav chapter-nav">

@@ -28,9 +28,86 @@
   <h1>Epilog: jeden asset od skanu do klatki</h1>
   <p class="subtitle">Prześledźmy jeden rekwizyt przez wszystkie patenty z tej książki — od skanu, przez trim sheet i LOD-y, po finalną klatkę z path tracera.</p>
 
-  <div class="panel practice">
-    <div class="panel-label">W przygotowaniu</div>
-    <p>Ten rozdział ma już ustalone miejsce w książce, tytuł i zakres — treść powstaje sesja po sesji. Jeśli trafiłeś tu z spisu treści, wróć za jakiś czas albo zajrzyj do rozdziałów, które są już napisane.</p>
+  <div class="panel">
+    <div class="panel-label">TL;DR</div>
+    <ul>
+      <li>Jeden rekwizyt, jedenaście etapów, wszystkie patenty z tej książki w kolejności, w jakiej naprawdę się pojawiają.</li>
+      <li>Widać na nim, że najważniejsze decyzje zapadają w pierwszych trzech etapach — zanim powstanie jakakolwiek geometria — i że reszta jest ich konsekwencją.</li>
+      <li>Widać też, gdzie każda z nich mogłaby zostać podjęta źle i co dokładnie by to kosztowało trzy tygodnie później.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <p>Skrzynia. Drewniana, okuta metalem, ma stać na drugim planie w ośmiu shotach, a w jednym z nich kamera przejedzie obok niej na wyciągnięcie ręki. Prześledźmy ją od briefu do klatki.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Etapy 1–3</div>
+    <h2>Decyzje przed pierwszym wierzchołkiem</h2>
+    <p><strong>1. Klasyfikacja i budżet.</strong> Skrzynia jest rekwizytem drugoplanowym z jednym zbliżeniem — czyli przypadkiem granicznym. Dostaje budżet planu średniego plus jawnie zapisaną furtkę na to jedno ujęcie (Rozdział 4). Decyzja zajmuje pięć minut i przesądza o wszystkim poniżej.</p>
+    <p><strong>2. Texel density.</strong> Set ma ustaloną gęstość 10,24 px/cm; skrzynia ją dziedziczy, a dla ujęcia z bliska dostanie osobną warstwę (Rozdział 6). Gdyby ta liczba nie istniała, skrzynia byłaby ostrzejsza lub bardziej rozmyta niż sąsiadujące z nią rzeczy — i nikt nie umiałby powiedzieć dlaczego.</p>
+    <p><strong>3. Gdzie mieszka detal.</strong> Deski i okucia mają wyraźny profil widoczny na sylwetce, więc detal krawędzi idzie w geometrię i displacement, a nie w mapę normalnych (Rozdział 13). Zapisane w opisie assetu, żeby za trzy tygodnie nie trzeba było zgadywać, gdzie nanieść poprawkę.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Etapy 4–7</div>
+    <h2>Budowa</h2>
+    <p><strong>4. Źródło.</strong> Drewno i metal biorą się z trim sheetu setu — ten sam arkusz, który pokrywa skrzynie, regały i framugi (Rozdział 5). Skrzynia nie dostaje własnych tekstur bazowych, bo nie ma po temu powodu.</p>
+    <p><strong>5. Modularność.</strong> Skrzynia jest jednym z pięciu wariantów zbudowanych z tych samych desek i okuć, różniących się proporcjami i układem (Rozdział 7). Koszt piątego wariantu to godzina, nie dzień.</p>
+    <p><strong>6. Warstwa unikatu.</strong> Charakter — wypalony numer, zaciek, otarcie przy uchwycie — dokładany dekalami (Rozdział 8), więc pozostaje edytowalny. Notatka „numer za duży” to zmiana parametru.</p>
+    <p><strong>7. Wypalanie.</strong> Krzywizna i zasłonięcie wypalone z wersji wysokiej rozdzielczości sterują maskami zużycia: wytarcia na krawędziach, kurz w zagłębieniach (Rozdział 16). Wymaga drugiego kanału UV, o którym pomyślano przy etapie 4, a nie teraz.</p>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Etapy 8–11</div>
+    <h2>Droga do klatki</h2>
+    <p><strong>8. Walidacja.</strong> Publikacja uruchamia testy: skala, pivot na spodzie skrzyni, nienachodzące UV w kanale wypalania, komplet map, texel density w zakresie, budżet (Rozdział 25). Dwa ostrzeżenia, zero błędów — publikacja przechodzi, raport zostaje.</p>
+    <p><strong>9. Zwielokrotnienie.</strong> W magazynie stoi ich sto czterdzieści. Wszystkie są instancjami pięciu wariantów, różnicowanymi obrotem, skalą i odcieniem (Rozdział 12). Pamięć rośnie o macierze, nie o geometrię.</p>
+    <p><strong>10. Poziomy szczegółowości.</strong> Narzędzie liczy maksymalny udział każdej instancji w kadrze przez wszystkie osiem ujęć i przydziela poziomy (Rozdział 10). Ta jedna, po której przejeżdża kamera, zostaje na LOD0 z displacementem; sto trzydzieści dziewięć pozostałych schodzi o dwa poziomy.</p>
+    <p><strong>11. Podgląd i finał.</strong> Set ogląda się w silniku przy ustawianiu kamery i świateł (Rozdział 17), z tym samym configem koloru i tymi samymi teksturami co finał (Rozdział 21). Ujęcie ze zbliżeniem idzie na farmę bez skrótów.</p>
+    <div class="diagram-frame">
+      <div class="diagram-hud"><span>Asset.trace</span><span>prop_crate_A · 11 etapów</span></div>
+      <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+        <line x1="30" y1="70" x2="670" y2="70" stroke="#2a2f38" stroke-width="2"/>
+        <g font-family="IBM Plex Mono" font-size="9" fill="#8b909b" text-anchor="middle">
+          <circle cx="46" cy="70" r="6" fill="#20242c" stroke="#9c82d8" stroke-width="2"/><text x="46" y="52">budżet</text>
+          <circle cx="102" cy="70" r="6" fill="#20242c" stroke="#9c82d8" stroke-width="2"/><text x="102" y="94">density</text>
+          <circle cx="158" cy="70" r="6" fill="#20242c" stroke="#9c82d8" stroke-width="2"/><text x="158" y="52">detal gdzie?</text>
+          <circle cx="222" cy="70" r="6" fill="#20242c" stroke="#e8a33d" stroke-width="2"/><text x="222" y="94">trim sheet</text>
+          <circle cx="278" cy="70" r="6" fill="#20242c" stroke="#e8a33d" stroke-width="2"/><text x="278" y="52">warianty</text>
+          <circle cx="334" cy="70" r="6" fill="#20242c" stroke="#e8a33d" stroke-width="2"/><text x="334" y="94">dekale</text>
+          <circle cx="390" cy="70" r="6" fill="#20242c" stroke="#e8a33d" stroke-width="2"/><text x="390" y="52">baking</text>
+          <circle cx="452" cy="70" r="6" fill="#20242c" stroke="#4fc3c0" stroke-width="2"/><text x="452" y="94">walidacja</text>
+          <circle cx="512" cy="70" r="6" fill="#20242c" stroke="#4fc3c0" stroke-width="2"/><text x="512" y="52">instancing</text>
+          <circle cx="572" cy="70" r="6" fill="#20242c" stroke="#4fc3c0" stroke-width="2"/><text x="572" y="94">LOD-y</text>
+          <circle cx="646" cy="70" r="6" fill="#20242c" stroke="#ecebe4" stroke-width="2"/><text x="646" y="52">klatka</text>
+        </g>
+        <text x="102" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9c82d8">decyzje — 15 minut</text>
+        <text x="306" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8a33d">budowa — dni</text>
+        <text x="545" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4fc3c0">automat — minuty</text>
+        <text x="350" y="154" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8b909b">trzy pierwsze punkty kosztują najmniej i przesądzają najwięcej</text>
+      </svg>
+      <div class="diagram-caption">Ta sama skrzynia bez pierwszych trzech punktów przechodzi te same etapy — tylko każdy z nich dwa razy.</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-eyebrow">Etap: Domknięcie</div>
+    <h2>Co z tego zostaje</h2>
+    <p>Żaden z jedenastu etapów nie jest efektowny. Żaden nie wymaga nowego oprogramowania ani przebudowy pipeline'u — wszystkie opierają się na rzeczach, które studio VFX już ma. Różnica polega wyłącznie na tym, że trzy pierwsze decyzje zostały podjęte świadomie i zapisane, a reszta z nich wynikła.</p>
+    <p>To jest cała teza tej książki. Gamedev nie ma lepszych narzędzi — ma nawyk podejmowania tych decyzji na początku, wymuszony przez budżet klatki, od którego zaczęliśmy w Rozdziale 1. Zegar wymusił dyscyplinę; dyscyplina okazała się przenośna, choć zegar nie.</p>
+  </div>
+  <div class="panel glossary">
+    <div class="panel-label">Słowniczek</div>
+    <dl>
+      <dt>Klasyfikacja assetu</dt>
+      <dd>Przypisanie assetu do klasy budżetowej na podstawie jego roli w kadrze; pierwsza i najtańsza decyzja.</dd>
+      <dt>Furtka na ujęcie</dt>
+      <dd>Zapisana zgoda na przekroczenie budżetu dla konkretnego shotu, zamiast podnoszenia budżetu wszystkim.</dd>
+      <dt>Warstwa unikatu</dt>
+      <dd>Dekale i maski dokładające charakter na wspólnym materiale bazowym; pozostaje edytowalna po publikacji.</dd>
+      <dt>Przydział poziomów</dt>
+      <dd>Policzenie, jaki poziom szczegółowości wystarcza każdej instancji, na podstawie jej udziału w kadrze.</dd>
+    </dl>
+  </div>
+  <div class="next">
+    <div class="panel-label" style="color:var(--violet);">Co dalej</div>
+    <p>To koniec części głównej. Dodatki A–N rozwijają pojedyncze mechanizmy, o które rozdziały musiały się otrzeć bez schodzenia do szczegółu — od rachunku texel density i anatomii trim sheetu po klastry, kompresję i graf zadań. Nie trzeba ich czytać po kolei.</p>
   </div>
 
 <div class="site-nav chapter-nav">
